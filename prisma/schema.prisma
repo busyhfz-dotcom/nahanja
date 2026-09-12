@@ -2,47 +2,117 @@ generator client {
   provider = "prisma-client-js"
 }
 
- datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  library   UserLibrary[]
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String?        @unique
+  name          String?
+  createdAt     DateTime?      @default(now()) @map("created_at") @db.Timestamptz(6)
+  library       UserLibrary[]
+  subscriptions Subscription[]
+  payments      Payment[]
+  @@map("users")
 }
 
 model Author {
-  id        String @id @default(uuid())
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name      String
+  bio       String?
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   books     Book[]
+  @@map("authors")
 }
 
 model Book {
-  id          String @id @default(uuid())
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title       String
+  slug        String        @unique
   description String?
-  cover       String?
-  authorId    String
-  author      Author @relation(fields: [authorId], references: [id])
+  coverUrl    String?       @map("cover_url")
+  authorId    String?       @map("author_id") @db.Uuid
+  createdAt   DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
+  author      Author?       @relation(fields: [authorId], references: [id])
   chapters    Chapter[]
+  libraries   UserLibrary[]
+  @@index([authorId])
+  @@map("books")
 }
 
 model Chapter {
-  id        String @id @default(uuid())
-  title     String
-  audioUrl  String?
-  bookId    String
-  book      Book @relation(fields: [bookId], references: [id])
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookId      String       @map("book_id") @db.Uuid
+  title       String
+  audioUrl    String?      @map("audio_url")
+  orderIndex  Int?         @default(0) @map("order_index")
+  createdAt   DateTime?    @default(now()) @map("created_at") @db.Timestamptz(6)
+  book        Book         @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  audioTracks AudioTrack[]
+  @@index([bookId, orderIndex])
+  @@map("chapters")
+}
+
+model AudioTrack {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chapterId       String   @map("chapter_id") @db.Uuid
+  title           String?
+  audioUrl        String   @map("audio_url")
+  durationSeconds Int?     @map("duration_seconds")
+  format          String?
+  bitrateKbps     Int?     @map("bitrate_kbps")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  chapter         Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  @@index([chapterId])
+  @@map("audio_tracks")
 }
 
 model UserLibrary {
-  id     String @id @default(uuid())
-  userId String
-  bookId String
-  user   User @relation(fields: [userId], references: [id])
-  book   Book @relation(fields: [bookId], references: [id])
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  bookId    String    @map("book_id") @db.Uuid
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book      Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  @@unique([userId, bookId])
+  @@index([userId])
+  @@index([bookId])
+  @@map("user_library")
+}
+
+model Subscription {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  plan        String
+  status      String    @default("active")
+  startsAt    DateTime  @default(now()) @map("starts_at") @db.Timestamptz(6)
+  endsAt      DateTime? @map("ends_at") @db.Timestamptz(6)
+  cancelledAt DateTime? @map("cancelled_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments    Payment[]
+  @@index([userId, status])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String        @map("user_id") @db.Uuid
+  subscriptionId String?       @map("subscription_id") @db.Uuid
+  amount         Decimal       @db.Decimal(12, 2)
+  currency       String        @default("IRR")
+  provider       String?
+  providerRef    String?       @unique @map("provider_ref")
+  status         String        @default("pending")
+  paidAt         DateTime?     @map("paid_at") @db.Timestamptz(6)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  @@index([userId, createdAt])
+  @@index([subscriptionId])
+  @@map("payments")
 }

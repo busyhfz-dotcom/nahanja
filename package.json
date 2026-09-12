@@ -1,25 +1,22 @@
 {
   "name": "nahanja",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "build": "mkdir -p dist && cp index.html dist/index.html",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:validate": "prisma validate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy"
   },
   "dependencies": {
-    "@prisma/client": "latest",
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest"
+    "@prisma/client": "6.19.0"
   },
   "devDependencies": {
-    "prisma": "latest",
-    "typescript": "latest",
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest"
+    "prisma": "6.19.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
