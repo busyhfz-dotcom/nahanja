@@ -1,0 +1,3 @@
+import type { Metadata } from "next"; import { notFound } from "next/navigation"; import { ContentPage } from "../../ui/content-page"; import { getCatalogItem } from "../../../lib/catalog";
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> { const item = getCatalogItem("world", (await params).slug); return item ? { title: `${item.title} | نهان‌جا`, description: item.description } : {}; }
+export default async function WorldPage({ params }: { params: Promise<{ slug: string }> }) { const item = getCatalogItem("world", (await params).slug); if (!item) notFound(); return <ContentPage item={item} />; }
