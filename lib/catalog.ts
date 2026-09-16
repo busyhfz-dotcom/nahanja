@@ -1,0 +1,12 @@
+export type ContentKind = "experience" | "book" | "world" | "collection";
+export type CatalogItem = { kind: ContentKind; slug: string; title: string; eyebrow: string; description: string; feeling: string[]; duration?: string; related: string[]; accent: "lime" | "violet" | "amber" | "blue" };
+export const catalog: CatalogItem[] = [
+  { kind: "experience", slug: "sleepless-nights", title: "برای شب‌هایی که خواب نمی‌آید", eyebrow: "یک تجربهٔ صوتی", description: "صدایی کوتاه برای وقتی که ذهن، اتاق را ترک نمی‌کند؛ از سکوت‌های خانه تا اولین خط یک کتاب.", feeling: ["بی‌خوابی", "آرامش", "خانه"], duration: "۳ دقیقه شنیدن", related: ["lights-off", "homes-that-speak"], accent: "violet" },
+  { kind: "experience", slug: "a-letter-at-home", title: "یک خانه، یک غیبت، یک نامه", eyebrow: "یک تجربهٔ روایی", description: "چند دقیقه برای مکث روی چیزهایی که در خانه می‌مانند؛ حتی وقتی آدم‌ها رفته‌اند.", feeling: ["دلتنگی", "خانه", "خاطره"], duration: "۴ دقیقه خواندن", related: ["lights-off", "homes-that-speak"], accent: "amber" },
+  { kind: "book", slug: "lights-off", title: "چراغ‌ها را من خاموش می‌کنم", eyebrow: "کتاب مرتبط", description: "روایتی صمیمی از زندگی روزمره، خانه و صداهایی که معمولاً شنیده نمی‌شوند.", feeling: ["خانه", "تنهایی", "زندگی روزمره"], duration: "پیش‌نمایش صوتی · ۸ دقیقه", related: ["sleepless-nights", "homes-that-speak"], accent: "amber" },
+  { kind: "world", slug: "homes-that-speak", title: "خانه‌هایی که حرف می‌زنند", eyebrow: "یک جهان", description: "مسیرهایی از کتاب‌ها، صداها و تجربه‌ها که بوی خانه دارند؛ جایی برای جزئیات کوچک و ماندگار.", feeling: ["خانه", "خاطره", "دلتنگی"], related: ["sleepless-nights", "a-letter-at-home", "lights-off"], accent: "lime" },
+  { kind: "collection", slug: "quiet-beginnings", title: "شروع‌های آرام", eyebrow: "یک کلکسیون", description: "برای روزهایی که می‌خواهید دوباره به کتاب نزدیک شوید، بی‌آنکه از همان ابتدا از شما چیزی بخواهد.", feeling: ["شروع", "شجاعت", "آرامش"], related: ["sleepless-nights", "lights-off"], accent: "blue" },
+];
+export function getCatalogItem(kind: ContentKind, slug: string) { return catalog.find((item) => item.kind === kind && item.slug === slug); }
+export function getRelatedItems(item: CatalogItem) { return item.related.map((slug) => catalog.find((candidate) => candidate.slug === slug)).filter((candidate): candidate is CatalogItem => Boolean(candidate)); }
+export function contentHref(item: CatalogItem) { return `/${item.kind}/${item.slug}`; }

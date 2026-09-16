@@ -1,0 +1,3 @@
+import { NextRequest, NextResponse } from "next/server"; import { ContentKind, getCatalogItem, getRelatedItems } from "../../../../../lib/catalog";
+const validKinds = new Set<ContentKind>(["experience", "book", "world", "collection"]);
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ kind: string; slug: string }> }) { const { kind, slug } = await params; if (!validKinds.has(kind as ContentKind)) return NextResponse.json({ error: { code: "INVALID_KIND" } }, { status: 400 }); const item = getCatalogItem(kind as ContentKind, slug); if (!item) return NextResponse.json({ error: { code: "NOT_FOUND" } }, { status: 404 }); return NextResponse.json({ data: item, included: getRelatedItems(item), meta: { version: "v1" } }); }
