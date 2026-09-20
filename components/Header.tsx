@@ -15,19 +15,19 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 inset-x-0 z-40 border-b border-[var(--border)] bg-[var(--glass-strong)] backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-6 lg:h-16">
+      <div dir="ltr" className="mx-auto flex h-14 max-w-[1500px] items-center justify-between px-4 md:px-6 lg:h-16">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2">
+        <a href="/" className="flex items-center gap-2" aria-label="صفحهٔ اصلی نهان‌جا">
           <span className="text-gold-gradient text-xl font-black tracking-tight lg:text-2xl">
             نَهان‌جا
           </span>
-          <span className="hidden text-[10px] text-[var(--gold-dim)] sm:block">
+          <span dir="ltr" className="hidden text-[10px] tracking-[.22em] text-[var(--gold-dim)] sm:block">
             Nahanja
           </span>
         </a>
 
         {/* Desktop Nav */}
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav dir="rtl" className="hidden items-center gap-1 md:flex">
           {navLinks.map((link) => (
             <a
               key={link.href}
@@ -40,7 +40,7 @@ export default function Header() {
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div dir="rtl" className="flex items-center gap-2">
           {/* Search Toggle */}
           <button
             onClick={() => setSearchOpen(!searchOpen)}
