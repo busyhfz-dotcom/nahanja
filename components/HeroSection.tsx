@@ -34,7 +34,7 @@ export default function HeroSection() {
         ))}
       </div>
 
-      <div className="relative mx-auto grid min-h-[624px] max-w-[1500px] items-stretch lg:grid-cols-[1.18fr_.82fr]">
+      <div dir="ltr" className="relative mx-auto grid min-h-[624px] max-w-[1500px] items-stretch lg:grid-cols-[1.18fr_.82fr]">
         <div className="relative min-h-[420px] overflow-hidden lg:order-1 lg:min-h-full">
           <img
             src="https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1800&q=88"
@@ -49,7 +49,7 @@ export default function HeroSection() {
           </div>
         </div>
 
-        <div className="relative z-10 flex flex-col justify-center px-6 py-14 text-right sm:px-10 lg:order-2 lg:px-14 xl:px-20">
+        <div dir="rtl" className="relative z-10 flex flex-col justify-center px-6 py-14 text-right sm:px-10 lg:order-2 lg:px-14 xl:px-20">
           <p className="mb-5 text-xs font-semibold tracking-[.2em] text-[var(--gold-dim)]">Nahanja / نهان‌جا</p>
           <h1 className="text-gold-gradient max-w-[560px] text-[clamp(2.8rem,5vw,5.75rem)] font-black leading-[1.23] tracking-[-.06em]">
             جایی برای کشف<br />آنچه در تو زنده است
