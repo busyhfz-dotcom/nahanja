@@ -1,1 +1,115 @@
-*{box-sizing:border-box}html,body{margin:0;padding:0;background:#050505;color:#fff;font-family:Tahoma,Arial,sans-serif}body{direction:rtl}.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle at center,#3a2400 0%,#050505 55%);padding:32px}h1{font-size:clamp(3rem,8vw,6rem);margin:0 0 1rem;font-weight:800}p{font-size:clamp(1rem,3vw,1.5rem);opacity:.85}button{margin-top:2rem;padding:1rem 2.5rem;border-radius:999px;background:#ff8a00;color:#fff;border:0;font-size:1rem;cursor:pointer}
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #0b0806;
+  --ink-2: #130d08;
+  --gold: oklch(0.79 0.115 88);
+  --gold-dim: oklch(0.62 0.045 85);
+  --gold-bright: oklch(0.92 0.09 92);
+  --gold-glow: oklch(0.79 0.115 88 / 34%);
+  --card: oklch(0.185 0.03 70);
+  --surface: oklch(0.24 0.032 72);
+  --border: oklch(0.79 0.115 88 / 22%);
+  --glass: oklch(0.17 0.025 70 / 72%);
+  --glass-strong: oklch(0.17 0.028 70 / 91%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--ink);
+  color: oklch(0.87 0.055 88);
+  font-family: "Vazirmatn", Tahoma, "Segoe UI", system-ui, sans-serif;
+}
+
+/* Gold gradient text */
+.text-gold-gradient {
+  background: linear-gradient(160deg, oklch(0.92 0.09 92) 10%, oklch(0.78 0.13 85) 45%, oklch(0.66 0.13 75) 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.79 0.115 88 / 25%);
+  border-radius: 999px;
+}
+
+/* Hide scrollbar for carousels */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Glow effects */
+.card-glow {
+  box-shadow: inset 0 1px 0 oklch(0.9 0.08 90 / 7%), 0 12px 32px -14px oklch(0 0 0 / 80%);
+}
+
+/* Audio progress bar */
+input[type="range"].audio-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+  direction: ltr;
+}
+input[type="range"].audio-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--gold);
+  cursor: pointer;
+}
+input[type="range"].audio-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: none;
+  cursor: pointer;
+}
+
+/* Animations */
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
