@@ -1,312 +1,204 @@
 "use client";
 
-import { useState } from "react";
-import type { Experience } from "@/lib/mock-data";
-import { books, worlds } from "@/lib/mock-data";
+import Image from "next/image";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect } from "react";
+import InkIcon, { type InkIconName } from "@/components/InkIcon";
+import {
+  books,
+  collections,
+  experiences,
+  getBookBySlug,
+  getBookForExperience,
+  getCollectionBySlug,
+  getExperienceBySlug,
+  getWorldBySlug,
+  getWorldForExperience,
+  worlds,
+} from "@/lib/mock-data";
+import { canonicalHref, type LayerKind, type LayerSelection } from "@/lib/layers";
 
-interface Props {
-  experience: Experience | null;
+type LayerSystemProps = {
+  selection: LayerSelection | null;
   onClose: () => void;
+  onNavigate: (selection: LayerSelection) => void;
+};
+
+const labels: Record<LayerKind, string> = {
+  experience: "تجربه",
+  book: "کتاب",
+  world: "جهان",
+  collection: "مجموعه",
+};
+
+function LayerLink({ selection, title, caption, icon, onNavigate }: {
+  selection: LayerSelection;
+  title: string;
+  caption: string;
+  icon: InkIconName;
+  onNavigate: (selection: LayerSelection) => void;
+}) {
+  return (
+    <a className="layer-link" href={canonicalHref(selection)} onClick={(event) => { event.preventDefault(); onNavigate(selection); }}>
+      <span className="layer-link__glyph"><InkIcon name={icon} width={19} height={19} /></span>
+      <span><strong>{title}</strong><small>{caption}</small></span>
+      <InkIcon name="arrow" width={17} height={17} />
+    </a>
+  );
 }
 
-type LayerView = "experience" | "book" | "world";
+function MiniCard({ selection, image, title, onNavigate }: { selection: LayerSelection; image: string; title: string; onNavigate: (selection: LayerSelection) => void }) {
+  return (
+    <a className="layer-panel__mini-card" href={canonicalHref(selection)} onClick={(event) => { event.preventDefault(); onNavigate(selection); }}>
+      <Image src={image} alt={title} width={180} height={240} sizes="150px" />
+      <span>{title}</span>
+    </a>
+  );
+}
 
-export default function LayerSystem({ experience, onClose }: Props) {
-  const [currentView, setCurrentView] = useState<LayerView>("experience");
-  const [history, setHistory] = useState<LayerView[]>([]);
-
-  if (!experience) return null;
-
-  const book = books.find((b) => b.title === experience.bookTitle) || books[0];
-  const world = worlds.find((w) => w.title === experience.worldTitle) || worlds[0];
-
-  const navigateTo = (view: LayerView) => {
-    setHistory((prev) => [...prev, currentView]);
-    setCurrentView(view);
-  };
-
-  const goBack = () => {
-    if (history.length > 0) {
-      const prev = history[history.length - 1];
-      setHistory((h) => h.slice(0, -1));
-      setCurrentView(prev);
-    } else {
-      onClose();
-    }
-  };
+function ExperienceLayer({ slug, onNavigate }: { slug: string; onNavigate: (selection: LayerSelection) => void }) {
+  const experience = getExperienceBySlug(slug) ?? experiences[0];
+  const book = getBookForExperience(experience);
+  const world = getWorldForExperience(experience);
 
   return (
-    <div className="fixed inset-0 z-50 flex">
-      {/* Backdrop */}
-      <button
-        className="absolute inset-0 border-0 bg-[oklch(0_0_0/70%)] backdrop-blur-[4px]"
-        onClick={onClose}
-        aria-label="بستن"
-      />
-
-      {/* Drawer */}
-      <div className="relative mr-auto h-full w-full max-w-[480px] overflow-y-auto border-r border-[oklch(0.79_0.115_88/25%)] bg-[oklch(0.185_0.03_70/97%)] shadow-[0_0_80px_-10px_#000] md:max-w-[520px]">
-        {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border)] bg-[oklch(0.185_0.03_70/95%)] px-5 py-4 backdrop-blur-lg">
-          <div className="flex items-center gap-3">
-            {/* Back button */}
-            <button
-              onClick={goBack}
-              className="grid h-8 w-8 place-items-center rounded-full border border-[var(--border)] text-[var(--gold-dim)] transition hover:border-[var(--gold-glow)] hover:text-[var(--gold)]"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-            </button>
-            {/* Layer breadcrumb */}
-            <div className="flex items-center gap-2 text-xs text-[var(--gold-dim)]">
-              <button
-                onClick={() => { setCurrentView("experience"); setHistory([]); }}
-                className={`transition ${currentView === "experience" ? "text-[var(--gold)] font-bold" : "hover:text-[var(--gold)]"}`}
-              >
-                تجربه
-              </button>
-              {(currentView === "book" || currentView === "world") && (
-                <>
-                  <span className="text-[oklch(0.79_0.115_88/30%)]">/</span>
-                  <button
-                    onClick={() => { if (currentView !== "book") navigateTo("book"); }}
-                    className={`transition ${currentView === "book" ? "text-[var(--gold)] font-bold" : "hover:text-[var(--gold)]"}`}
-                  >
-                    {currentView === "book" ? "کتاب" : "جهان"}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-          {/* Close */}
-          <button
-            onClick={onClose}
-            className="grid h-8 w-8 place-items-center rounded-full border border-[var(--border)] text-[var(--gold-dim)] transition hover:text-[var(--gold)]"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-5">
-          {/* ===== Experience View ===== */}
-          {currentView === "experience" && (
-            <div className="animate-fade-up">
-              {/* Art */}
-              <div className="relative aspect-video overflow-hidden rounded-2xl border border-[oklch(0.79_0.115_88/25%)]">
-                <img
-                  src={experience.coverImage}
-                  alt={experience.title}
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.185_0.03_70)] via-transparent to-transparent" />
-                {/* Play button */}
-                <button className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-[var(--gold)] px-5 py-2 text-xs font-bold text-[var(--ink)] transition hover:shadow-[0_0_30px_-4px_oklch(0.79_0.115_88/60%)]">
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                  شنیدن
-                </button>
-              </div>
-
-              {/* Title */}
-              <h3 className="mt-5 text-xl font-extrabold leading-relaxed text-[oklch(0.87_0.055_88)]">
-                {experience.title}
-              </h3>
-              <p className="mt-1 text-xs text-[var(--gold)]">
-                {experience.author}
-              </p>
-
-              {/* Meta tags */}
-              <div className="mt-4 flex flex-wrap gap-2">
-                {experience.mood.map((m) => (
-                  <span
-                    key={m}
-                    className="rounded-full border border-[var(--border)] px-3 py-1 text-[10px] text-[var(--gold-dim)]"
-                  >
-                    {m === "calm" ? "آرامش" : m === "think" ? "فکر" : m === "imagine" ? "خیال" : m === "change" ? "تغییر" : m === "travel" ? "سفر" : "الهام"}
-                  </span>
-                ))}
-                <span className="rounded-full border border-[var(--border)] px-3 py-1 text-[10px] text-[var(--gold-dim)]">
-                  {experience.duration}
-                </span>
-              </div>
-
-              {/* Description */}
-              <p className="mt-5 text-xs leading-7 text-[var(--gold-dim)]">
-                هر تجربه در نهان‌جا ترکیبی از متن، صدا، و فضاسازی است. گوش کن، بخوان، و اجازه بده جهانی جدید در تو باز شود. از کتاب فقط یک جمله آغاز می‌شود، اما مسیر تا جایی ادامه دارد که خودت بخواهی.
-              </p>
-
-              {/* Navigation to deeper layers */}
-              <div className="mt-8 flex flex-col gap-3">
-                <button
-                  onClick={() => navigateTo("book")}
-                  className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[oklch(0.24_0.032_72/30%)] p-4 text-right transition hover:border-[oklch(0.79_0.115_88/40%)]"
-                >
-                  <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg border border-[oklch(0.79_0.115_88/30%)] bg-[oklch(0.79_0.115_88/10%)] text-[var(--gold)]">
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                      <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold">{book.title}</p>
-                    <p className="text-[10px] text-[var(--gold-dim)]">
-                      {book.author} · {book.chaptersCount} فصل
-                    </p>
-                  </div>
-                  <svg className="h-4 w-4 flex-shrink-0 text-[var(--gold-dim)]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path d="m15 18-6-6 6-6" />
-                  </svg>
-                </button>
-
-                <button
-                  onClick={() => navigateTo("world")}
-                  className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[oklch(0.24_0.032_72/30%)] p-4 text-right transition hover:border-[oklch(0.79_0.115_88/40%)]"
-                >
-                  <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg border border-[oklch(0.79_0.115_88/30%)] bg-[oklch(0.79_0.115_88/10%)] text-[var(--gold)]">
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                      <circle cx={12} cy={12} r={10} />
-                      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                    </svg>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold">{world.title}</p>
-                    <p className="text-[10px] text-[var(--gold-dim)]">
-                      {world.booksCount} کتاب
-                    </p>
-                  </div>
-                  <svg className="h-4 w-4 flex-shrink-0 text-[var(--gold-dim)]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path d="m15 18-6-6 6-6" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Action buttons */}
-              <div className="mt-6 flex flex-col gap-3">
-                <button className="w-full rounded-full bg-[var(--gold)] py-3 text-sm font-extrabold text-[var(--ink)] transition hover:shadow-[0_0_30px_-4px_oklch(0.79_0.115_88/60%)]">
-                  شنیدن کامل
-                </button>
-                <button className="w-full rounded-full border border-[oklch(0.79_0.115_88/50%)] bg-transparent py-3 text-sm font-extrabold text-[var(--gold)] transition hover:bg-[var(--gold)] hover:text-[var(--ink)]">
-                  بیشتر بخوان
-                </button>
-                <div className="flex gap-3">
-                  <button className="flex-1 rounded-full border border-[var(--border)] bg-transparent py-2.5 text-[11px] text-[var(--gold-dim)] transition hover:border-[oklch(0.79_0.115_88/40%)] hover:text-[var(--gold)]">
-                    شنیدن نمونه
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ===== Book View ===== */}
-          {currentView === "book" && (
-            <div className="animate-fade-up">
-              <div className="relative aspect-[3/4] max-w-[200px] mx-auto overflow-hidden rounded-xl border border-[oklch(0.79_0.115_88/25%)]">
-                <img src={book.coverImage} alt={book.title} className="h-full w-full object-cover" />
-              </div>
-              <h3 className="mt-5 text-center text-xl font-extrabold">{book.title}</h3>
-              <p className="mt-1 text-center text-xs text-[var(--gold)]">{book.author}</p>
-              <div className="mt-3 flex items-center justify-center gap-2 text-xs text-[var(--gold-dim)]">
-                <span className="flex items-center gap-1">
-                  <svg className="h-3 w-3 text-[var(--gold)]" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                  {book.rating}
-                </span>
-                <span>·</span>
-                <span>{book.chaptersCount} فصل</span>
-              </div>
-              <p className="mt-5 text-xs leading-7 text-[var(--gold-dim)]">{book.description}</p>
-
-              {/* Chapter list */}
-              <div className="mt-8">
-                <h4 className="mb-4 text-sm font-bold">فصل‌ها</h4>
-                <div className="flex flex-col gap-2">
-                  {Array.from({ length: Math.min(5, book.chaptersCount) }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[oklch(0.24_0.032_72/20%)] p-3 transition hover:border-[oklch(0.79_0.115_88/30%)]"
-                    >
-                      <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg border border-[oklch(0.79_0.115_88/30%)] bg-[oklch(0.79_0.115_88/10%)] text-[10px] font-bold text-[var(--gold)]">
-                        {i + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-bold">فصل {i + 1}</p>
-                        <p className="text-[9px] text-[var(--gold-dim)]">
-                          {Math.floor(Math.random() * 20 + 5)} دقیقه
-                        </p>
-                      </div>
-                      <button className="grid h-7 w-7 place-items-center rounded-full bg-[oklch(0.79_0.115_88/10%)] text-[var(--gold)]">
-                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                onClick={() => navigateTo("world")}
-                className="mt-6 flex w-full items-center gap-3 rounded-xl border border-[var(--border)] bg-[oklch(0.24_0.032_72/30%)] p-4 text-right transition hover:border-[oklch(0.79_0.115_88/40%)]"
-              >
-                <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg border border-[oklch(0.79_0.115_88/30%)] bg-[oklch(0.79_0.115_88/10%)] text-[var(--gold)]">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                    <circle cx={12} cy={12} r={10} />
-                    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                  </svg>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold">رفتن به {world.title}</p>
-                  <p className="text-[10px] text-[var(--gold-dim)]">{world.booksCount} کتاب در این جهان</p>
-                </div>
-                <svg className="h-4 w-4 flex-shrink-0 text-[var(--gold-dim)]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path d="m15 18-6-6 6-6" />
-                </svg>
-              </button>
-            </div>
-          )}
-
-          {/* ===== World View ===== */}
-          {currentView === "world" && (
-            <div className="animate-fade-up">
-              <div className="relative aspect-video overflow-hidden rounded-2xl border border-[oklch(0.79_0.115_88/25%)]">
-                <img src={world.coverImage} alt={world.title} className="h-full w-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.185_0.03_70)] via-transparent to-transparent" />
-              </div>
-              <h3 className="mt-5 text-xl font-extrabold">{world.title}</h3>
-              <p className="mt-1 text-xs text-[var(--gold)]">{world.booksCount} کتاب</p>
-              <p className="mt-4 text-xs leading-7 text-[var(--gold-dim)]">{world.description}</p>
-
-              {/* Books in this world */}
-              <div className="mt-8">
-                <h4 className="mb-4 text-sm font-bold">کتاب‌های این جهان</h4>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {books.slice(0, 4).map((b) => (
-                    <div
-                      key={b.id}
-                      className="group cursor-pointer overflow-hidden rounded-xl border border-[var(--border)] bg-[oklch(0.24_0.032_72/30%)] p-2 transition hover:border-[oklch(0.79_0.115_88/40%)]"
-                    >
-                      <div className="aspect-[3/4] overflow-hidden rounded-lg">
-                        <img src={b.coverImage} alt={b.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                      </div>
-                      <p className="mt-2 truncate text-[10px] font-bold">{b.title}</p>
-                      <p className="truncate text-[8px] text-[var(--gold-dim)]">{b.author}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <button className="mt-6 w-full rounded-full border border-[oklch(0.79_0.115_88/50%)] bg-transparent py-3 text-sm font-bold text-[var(--gold)] transition hover:bg-[var(--gold)] hover:text-[var(--ink)]">
-                همه جهان‌ها &larr;
-              </button>
-            </div>
-          )}
-        </div>
+    <>
+      <p className="layer-panel__eyebrow">تجربه / {experience.duration}</p>
+      <h2>{experience.title}</h2>
+      <div className="layer-panel__facts">{experience.mood.map((mood) => <span key={mood}>{mood}</span>)}<span>{experience.author}</span></div>
+      <p className="layer-panel__description">{experience.excerpt}</p>
+      <p className="layer-panel__quote">«{experience.trace}»</p>
+      <div className="layer-panel__links">
+        <LayerLink selection={{ kind: "book", slug: book.slug }} title={book.title} caption={`${book.author} · ${book.chaptersCount} فصل`} icon="book" onNavigate={onNavigate} />
+        <LayerLink selection={{ kind: "world", slug: world.slug }} title={world.title} caption={world.atmosphere} icon="world" onNavigate={onNavigate} />
       </div>
-    </div>
+    </>
+  );
+}
+
+function BookLayer({ slug, onNavigate }: { slug: string; onNavigate: (selection: LayerSelection) => void }) {
+  const book = getBookBySlug(slug) ?? books[0];
+  const experience = experiences.find((item) => item.bookSlug === book.slug) ?? experiences[0];
+  const world = getWorldForExperience(experience);
+  return (
+    <>
+      <div className="layer-panel__book-cover"><Image src={book.coverImage} alt={book.title} fill sizes="260px" /></div>
+      <p className="layer-panel__eyebrow">کتاب / {book.year}</p>
+      <h2>{book.title}</h2>
+      <div className="layer-panel__facts"><span>{book.author}</span><span>{book.chaptersCount} فصل</span><span>امتیاز {book.rating}</span></div>
+      <p className="layer-panel__description">{book.description}</p>
+      <div className="layer-panel__links">
+        <LayerLink selection={{ kind: "experience", slug: experience.slug }} title="ورود از یک تجربه" caption={experience.title} icon="sound" onNavigate={onNavigate} />
+        <LayerLink selection={{ kind: "world", slug: world.slug }} title={world.title} caption="جهانِ مرتبط" icon="world" onNavigate={onNavigate} />
+      </div>
+    </>
+  );
+}
+
+function WorldLayer({ slug, onNavigate }: { slug: string; onNavigate: (selection: LayerSelection) => void }) {
+  const world = getWorldBySlug(slug) ?? worlds[0];
+  const relatedExperiences = experiences.filter((item) => item.worldSlug === world.slug);
+  const displayBooks = books.slice(0, 3);
+  return (
+    <>
+      <p className="layer-panel__eyebrow">جهان / {world.atmosphere}</p>
+      <h2>{world.title}</h2>
+      <div className="layer-panel__facts"><span>{world.booksCount} کتاب پیوندخورده</span><span>در حال گسترش</span></div>
+      <p className="layer-panel__description">{world.description}</p>
+      <div className="layer-panel__links">
+        {relatedExperiences.slice(0, 2).map((experience) => <LayerLink key={experience.id} selection={{ kind: "experience", slug: experience.slug }} title={experience.title} caption="ورود با یک تجربه" icon="sound" onNavigate={onNavigate} />)}
+      </div>
+      <div className="layer-panel__mini-grid">
+        {displayBooks.map((book) => <MiniCard key={book.id} selection={{ kind: "book", slug: book.slug }} image={book.coverImage} title={book.title} onNavigate={onNavigate} />)}
+      </div>
+    </>
+  );
+}
+
+function CollectionLayer({ slug, onNavigate }: { slug: string; onNavigate: (selection: LayerSelection) => void }) {
+  const collection = getCollectionBySlug(slug) ?? collections[0];
+  const displayBooks = books.slice(0, 3);
+  return (
+    <>
+      <p className="layer-panel__eyebrow">مجموعه / {collection.itemsCount} اثر</p>
+      <h2>{collection.title}</h2>
+      <div className="layer-panel__facts"><span>پروندهٔ انتخابی</span><span>{collection.note}</span></div>
+      <p className="layer-panel__description">{collection.description}</p>
+      <div className="layer-panel__mini-grid">
+        {displayBooks.map((book) => <MiniCard key={book.id} selection={{ kind: "book", slug: book.slug }} image={book.coverImage} title={book.title} onNavigate={onNavigate} />)}
+      </div>
+      <div className="layer-panel__links">
+        <LayerLink selection={{ kind: "world", slug: worlds[0].slug }} title="ادامه در جهان تنهایی" caption="لایهٔ بعدی این مجموعه" icon="world" onNavigate={onNavigate} />
+      </div>
+    </>
+  );
+}
+
+function getLayerArt(selection: LayerSelection) {
+  if (selection.kind === "experience") return getExperienceBySlug(selection.slug)?.coverImage ?? experiences[0].coverImage;
+  if (selection.kind === "book") return getBookBySlug(selection.slug)?.coverImage ?? books[0].coverImage;
+  if (selection.kind === "world") return getWorldBySlug(selection.slug)?.coverImage ?? worlds[0].coverImage;
+  return getCollectionBySlug(selection.slug)?.coverImage ?? collections[0].coverImage;
+}
+
+export default function LayerSystem({ selection, onClose, onNavigate }: LayerSystemProps) {
+  useEffect(() => {
+    if (!selection) return;
+    const previous = document.body.style.overflow;
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", escape);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", escape);
+    };
+  }, [selection, onClose]);
+
+  return (
+    <AnimatePresence>
+      {selection && (
+        <>
+          <motion.button className="layer-backdrop" type="button" aria-label="بستن لایه" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.28 }} />
+          <div className="layer-shell">
+            <motion.section
+              className="layer-panel"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="layer-title"
+              initial={{ opacity: 0, y: 28, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 22, scale: 0.98 }}
+              transition={{ duration: 0.42, ease: [0.2, 0.8, 0.2, 1] }}
+            >
+              <div className="layer-panel__art">
+                <Image src={getLayerArt(selection)} alt="" fill sizes="(max-width: 900px) 100vw, 44vw" priority />
+                <span className="layer-panel__stamp">لایه</span>
+              </div>
+              <div className="layer-panel__body">
+                <div className="layer-panel__top">
+                  <div className="layer-panel__crumbs">
+                    <button type="button" data-active={selection.kind === "experience"} onClick={() => onNavigate({ kind: "experience", slug: experiences[0].slug })}>تجربه</button>
+                    <span>·</span>
+                    <button type="button" data-active={selection.kind === "book"} onClick={() => onNavigate({ kind: "book", slug: books[0].slug })}>کتاب</button>
+                    <span>·</span>
+                    <button type="button" data-active={selection.kind === "world"} onClick={() => onNavigate({ kind: "world", slug: worlds[0].slug })}>جهان</button>
+                    <span>·</span>
+                    <button type="button" data-active={selection.kind === "collection"} onClick={() => onNavigate({ kind: "collection", slug: collections[0].slug })}>مجموعه</button>
+                  </div>
+                  <button type="button" className="layer-panel__close" onClick={onClose} aria-label="بستن"><InkIcon name="close" width={18} height={18} /></button>
+                </div>
+                <motion.div key={`${selection.kind}:${selection.slug}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+                  <span className="sr-only" id="layer-title">{labels[selection.kind]}</span>
+                  {selection.kind === "experience" && <ExperienceLayer slug={selection.slug} onNavigate={onNavigate} />}
+                  {selection.kind === "book" && <BookLayer slug={selection.slug} onNavigate={onNavigate} />}
+                  {selection.kind === "world" && <WorldLayer slug={selection.slug} onNavigate={onNavigate} />}
+                  {selection.kind === "collection" && <CollectionLayer slug={selection.slug} onNavigate={onNavigate} />}
+                </motion.div>
+              </div>
+            </motion.section>
+          </div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }

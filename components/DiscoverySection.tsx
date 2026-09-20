@@ -1,40 +1,51 @@
 "use client";
 
-import { moods } from "@/lib/mock-data";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { experiences, moods, type MoodId } from "@/lib/mock-data";
+import type { LayerSelection } from "@/lib/layers";
 
-export default function DiscoverySection() {
+type DiscoverySectionProps = {
+  selectedMood: MoodId;
+  onSelectMood: (mood: MoodId) => void;
+  onOpenLayer: (selection: LayerSelection) => void;
+};
+
+export default function DiscoverySection({ selectedMood, onSelectMood, onOpenLayer }: DiscoverySectionProps) {
+  const selected = moods.find((mood) => mood.id === selectedMood) ?? moods[0];
+  const nextExperience = experiences.find((experience) => experience.mood.includes(selectedMood)) ?? experiences[0];
+
   return (
-    <section id="discover" className="relative overflow-hidden bg-[radial-gradient(ellipse_70%_100%_at_50%_0%,oklch(0.25_0.04_70/30%),transparent_65%)] py-14 md:py-20">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
-        {/* Section title */}
-        <div className="mb-10 text-center">
-          <h2 className="text-gold-gradient text-2xl font-extrabold md:text-3xl">
-            امروز دنبال چه چیزی هستی؟
-          </h2>
+    <section id="discover" className="discovery-map" aria-labelledby="discovery-title">
+      <div className="discovery-map__inner">
+        <div className="discovery-map__intro">
+          <p className="section-kicker">دروازهٔ کشف / از بیرون به درون</p>
+          <h2 id="discovery-title" className="section-title">امروز دنبال<br />چه چیزی هستی؟</h2>
+          <p>{selected.sentence}</p>
+          <div className="discovery-map__selected">اکنون: <strong>{selected.label}</strong></div>
+          <button type="button" className="ink-outline" onClick={() => onOpenLayer({ kind: "experience", slug: nextExperience.slug })}>
+            باز کردن یک ردّ مرتبط <span aria-hidden>↙</span>
+          </button>
         </div>
 
-        {/* Mood circles */}
-        <div className="flex justify-center gap-5 overflow-x-auto pb-4 no-scrollbar sm:gap-7 md:gap-9 lg:gap-11">
-          {moods.map((mood) => (
-            <button
+        <div className="discovery-map__orbital" aria-label="مسیرهای کشف">
+          {moods.map((mood, index) => (
+            <motion.button
+              type="button"
               key={mood.id}
-              className="group flex flex-shrink-0 flex-col items-center gap-3 transition"
+              className="mood-orb"
+              data-active={selectedMood === mood.id}
+              onClick={() => onSelectMood(mood.id)}
+              aria-pressed={selectedMood === mood.id}
+              initial={{ opacity: 0, scale: 0.74 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ delay: index * 0.08, duration: 0.55, ease: [0.2, 0.8, 0.2, 1] }}
             >
-              {/* Circle image */}
-              <div className="relative h-16 w-16 overflow-hidden rounded-full border border-[oklch(0.79_0.115_88/45%)] transition-all duration-300 group-hover:-translate-y-1 group-hover:border-[var(--gold)] group-hover:shadow-[0_0_24px_-4px_oklch(0.79_0.115_88/40%)] sm:h-20 sm:w-20 md:h-[88px] md:w-[88px]">
-                <img
-                  src={mood.image}
-                  alt={mood.label}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,transparent_10%,rgba(0,0,0,.38)_100%)]" />
-              </div>
-              {/* Label */}
-              <span className="text-xs font-bold text-[var(--gold-dim)] transition group-hover:text-[var(--gold)] sm:text-sm">
-                {mood.label}
-              </span>
-            </button>
+              <Image src={mood.image} alt="" fill sizes="140px" />
+              <span>{mood.icon}</span>
+              <small>{mood.label}</small>
+            </motion.button>
           ))}
         </div>
       </div>
