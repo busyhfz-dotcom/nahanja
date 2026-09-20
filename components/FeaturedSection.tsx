@@ -1,71 +1,43 @@
 "use client";
 
-import { useRef } from "react";
-import { experiences, type Experience } from "@/lib/mock-data";
-import ExperienceCard from "./ExperienceCard";
+import { useMemo, useRef } from "react";
+import InkIcon from "@/components/InkIcon";
+import ExperienceCard from "@/components/ExperienceCard";
+import { experiences, type Experience, type MoodId } from "@/lib/mock-data";
+import type { LayerSelection } from "@/lib/layers";
 
-interface Props {
-  onOpenExperience?: (exp: Experience) => void;
-}
+type FeaturedSectionProps = {
+  selectedMood: MoodId;
+  onOpenLayer: (selection: LayerSelection) => void;
+};
 
-export default function FeaturedSection({ onOpenExperience }: Props) {
+export default function FeaturedSection({ selectedMood, onOpenLayer }: FeaturedSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const featured = useMemo(() => {
+    const selected = experiences.filter((item) => item.featured && item.mood.includes(selectedMood));
+    const rest = experiences.filter((item) => item.featured && !item.mood.includes(selectedMood));
+    return [...selected, ...rest];
+  }, [selectedMood]);
 
-  const scroll = (direction: "left" | "right") => {
-    if (!scrollRef.current) return;
-    const amount = direction === "left" ? -340 : 340;
-    scrollRef.current.scrollBy({ left: amount, behavior: "smooth" });
-  };
-
-  const featured = experiences.filter((e) => e.featured);
+  const scroll = (direction: number) => scrollRef.current?.scrollBy({ left: direction * 340, behavior: "smooth" });
+  const openExperience = (experience: Experience) => onOpenLayer({ kind: "experience", slug: experience.slug });
 
   return (
-    <section className="relative py-16 md:py-24">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
-        {/* Section header */}
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-lg font-extrabold text-[oklch(0.87_0.055_88)] md:text-xl">
-            تجربه‌های منتخب
-          </h2>
-          <a
-            href="#"
-            className="text-xs font-bold text-[var(--gold)] transition hover:underline"
-          >
-            مشاهده همه &larr;
-          </a>
+    <section id="experiences" className="experience-rail" aria-labelledby="experience-title">
+      <div className="experience-rail__head">
+        <div>
+          <p className="section-kicker">تجربه‌ها / بخشِ قابلِ لمسِ یک کتاب</p>
+          <h2 id="experience-title" className="section-title">ردهایی برای ادامه دادن</h2>
+          <p>این چیدمان با حس انتخابی تو جابه‌جا می‌شود.</p>
         </div>
-
-        {/* Carousel container */}
-        <div className="relative">
-          {/* Scroll buttons */}
-          <button
-            onClick={() => scroll("right")}
-            className="absolute -right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[var(--border)] bg-[var(--glass-strong)] text-[var(--gold)] shadow-lg transition hover:bg-[var(--gold)] hover:text-[var(--ink)] md:grid"
-            aria-label="بعدی"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-          </button>
-          <button
-            onClick={() => scroll("left")}
-            className="absolute -left-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[var(--border)] bg-[var(--glass-strong)] text-[var(--gold)] shadow-lg transition hover:bg-[var(--gold)] hover:text-[var(--ink)] md:grid"
-            aria-label="قبلی"
-          >
-            <svg className="h-4 w-4 rotate-180" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-          </button>
-
-          {/* Cards */}
-          <div
-            ref={scrollRef}
-            className="no-scrollbar flex gap-4 overflow-x-auto pb-4 md:gap-6"
-          >
-            {featured.map((exp) => (
-              <ExperienceCard key={exp.id} experience={exp} onOpen={onOpenExperience} />
-            ))}
-          </div>
+        <div className="hidden gap-2 md:flex">
+          <button type="button" className="header-icon" aria-label="کارت قبلی" onClick={() => scroll(1)}><InkIcon name="arrow" width={18} height={18} /></button>
+          <button type="button" className="header-icon" aria-label="کارت بعدی" onClick={() => scroll(-1)}><InkIcon name="arrow" className="rotate-180" width={18} height={18} /></button>
+        </div>
+      </div>
+      <div className="experience-rail__viewport">
+        <div ref={scrollRef} className="experience-rail__scroll">
+          {featured.map((experience, index) => <ExperienceCard key={experience.id} experience={experience} index={index} onOpen={openExperience} />)}
         </div>
       </div>
     </section>
