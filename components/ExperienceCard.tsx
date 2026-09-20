@@ -11,7 +11,7 @@ export default function ExperienceCard({ experience, onOpen }: Props) {
   return (
     <button
       onClick={() => onOpen?.(experience)}
-      className="group relative flex w-[280px] flex-shrink-0 flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-b from-[oklch(0.21_0.032_72/92%)] to-[oklch(0.17_0.026_70/95%)] transition-all duration-300 hover:border-[oklch(0.79_0.115_88/40%)] hover:shadow-[0_20px_50px_-12px_oklch(0_0_0/80%)] sm:w-[320px] md:w-[360px]"
+      className="group relative flex w-[230px] flex-shrink-0 flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-gradient-to-b from-[oklch(0.21_0.032_72/92%)] to-[oklch(0.17_0.026_70/95%)] text-right transition-all duration-300 hover:-translate-y-1 hover:border-[oklch(0.79_0.115_88/48%)] hover:shadow-[0_20px_50px_-12px_oklch(0_0_0/80%)] sm:w-[250px] md:w-[calc((100%-4.5rem)/4)]"
     >
       {/* Image */}
       <div className="relative aspect-[16/10] overflow-hidden">
@@ -38,7 +38,7 @@ export default function ExperienceCard({ experience, onOpen }: Props) {
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col gap-2 p-4 text-right">
+      <div className="flex flex-1 flex-col gap-2 p-3.5 text-right">
         <h3 className="line-clamp-2 text-sm font-bold leading-relaxed text-[oklch(0.87_0.055_88)]">
           {experience.title}
         </h3>

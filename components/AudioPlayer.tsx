@@ -9,7 +9,7 @@ export default function AudioPlayer() {
   const [volume, setVolume] = useState(66);
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[oklch(0.79_0.115_88/25%)] bg-[oklch(0.185_0.03_70/90%)] backdrop-blur-xl">
+    <div id="audio" className="fixed inset-x-0 bottom-0 z-30 border-t border-[oklch(0.79_0.115_88/25%)] bg-[oklch(0.185_0.03_70/90%)] backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3 md:flex-nowrap md:gap-4 md:px-6">
         {/* Now playing info */}
         <div className="flex min-w-0 flex-1 items-center gap-3 md:min-w-[200px] md:flex-none">

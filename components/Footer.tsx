@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="border-t border-[var(--border)] bg-[var(--ink)] pb-32 pt-12">
+    <footer id="journey" className="border-t border-[var(--border)] bg-[var(--ink)] pb-32 pt-12">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="grid gap-8 md:grid-cols-3">
           {/* Brand */}

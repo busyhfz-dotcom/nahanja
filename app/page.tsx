@@ -10,6 +10,7 @@ import CollectionsSection from "@/components/CollectionsSection";
 import AudioPlayer from "@/components/AudioPlayer";
 import LayerSystem from "@/components/LayerSystem";
 import Footer from "@/components/Footer";
+import MobileDock from "@/components/MobileDock";
 import type { Experience } from "@/lib/mock-data";
 
 export default function Home() {
@@ -19,7 +20,7 @@ export default function Home() {
     <>
       <Header />
 
-      <main>
+      <main id="top" className="pb-24 md:pb-20">
         <HeroSection />
 
         {/* Divider glow */}
@@ -43,6 +44,7 @@ export default function Home() {
       </main>
 
       <AudioPlayer />
+      <MobileDock />
 
       {/* Layer System (modal overlay) */}
       <LayerSystem
