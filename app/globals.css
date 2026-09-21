@@ -34,6 +34,9 @@ body {
   font-family: "Vazirmatn", Tahoma, "Segoe UI", system-ui, sans-serif;
 }
 
+.cinematic-shell { min-height: 100svh; background: #f2efe5; }
+.cinematic-frame { display: block; width: 100%; min-height: 100svh; border: 0; }
+
 ::selection {
   background: oklch(0.79 0.115 88 / 32%);
   color: oklch(0.96 0.04 88);
