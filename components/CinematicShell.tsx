@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 
-const PREVIEW_PATH = "/nahanja-preview.html";
+const PREVIEW_PATH = "/nahanja-preview-showcase.html";
 
 export default function CinematicShell() {
   const frameRef = useRef<HTMLIFrameElement>(null);
@@ -12,9 +12,7 @@ export default function CinematicShell() {
   const interactivePreviewLoaded = useCallback(() => {
     try {
       return Boolean(
-        frameRef.current?.contentDocument
-          ?.getElementById("nahanja-app")
-          ?.getAttribute("data-screen"),
+        frameRef.current?.contentDocument?.getElementById("showcase-preview"),
       );
     } catch {
       return false;
