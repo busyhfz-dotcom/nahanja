@@ -50,8 +50,8 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
 #site-footer{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
 #nahanja-app[data-screen="home"] .home{overflow-x:clip}
 #nahanja-app[data-screen="home"] .home-scene{min-height:532px;overflow:clip}
-#nahanja-app .home-book,#nahanja-app .home-trace{transition:opacity .22s ease,transform .22s ease,visibility .22s ease}
-#nahanja-app .home-scene.member-panorama-active .home-book,#nahanja-app .home-scene.member-panorama-active .home-trace{opacity:0!important;visibility:hidden!important;pointer-events:none!important;transform:translateY(-16px) scale(.97)!important}
+#nahanja-app .home-scene>*{transition:opacity .22s ease,transform .22s ease,visibility .22s ease}
+#nahanja-app .home-scene.member-panorama-active>*{opacity:0!important;visibility:hidden!important;pointer-events:none!important;transform:translateY(-16px) scale(.97)!important}
 #site-header{position:relative}
 #site-header .entry-header-guide{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px;border:0;background:transparent;color:#385342;font:inherit;font-size:15px;white-space:nowrap;cursor:pointer}
 #site-header .entry-header-guide svg{width:17px;height:17px}
