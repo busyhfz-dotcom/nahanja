@@ -115,14 +115,15 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
     const doc = frame.contentDocument;
     if (!doc) return;
     // A direct visit starts at the entry screen. The active inner route is
-    // mirrored into the address bar, so reloading a path never interrupts it.
-    const outerRoute = window.location.hash;
+    // mirrored into the page that hosts this preview, so reload keeps the path.
+    const hostWindow = window.parent === window ? window : window.parent;
+    const outerRoute = hostWindow.location.hash;
     if (outerRoute) frame.contentWindow.location.hash = outerRoute;
     else if (!frame.contentWindow.location.hash) frame.contentWindow.location.hash = "#/entry";
     const syncRoute = () => {
       const currentRoute = frame.contentWindow.location.hash;
-      if (currentRoute && window.location.hash !== currentRoute) {
-        window.history.replaceState(null, "", currentRoute);
+      if (currentRoute && hostWindow.location.hash !== currentRoute) {
+        hostWindow.history.replaceState(null, "", currentRoute);
       }
     };
     frame.contentWindow.addEventListener("hashchange", syncRoute);
