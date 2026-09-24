@@ -124,7 +124,7 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
     const carousel = doc.querySelector(".world-carousel");
     if (!scene || !carousel) return;
     const bounds = carousel.getBoundingClientRect();
-    scene.classList.toggle("member-panorama-active", bounds.top < 170 && bounds.bottom > 0);
+    scene.classList.toggle("member-panorama-active", bounds.top < 400 && bounds.bottom > 0);
   }
 
   function mount(doc) {
