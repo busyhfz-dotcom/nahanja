@@ -131,6 +131,7 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
     const observe = () => {
       style(doc);
       ensureEntryGuide(doc);
+      syncRoute();
       const scene = doc.querySelector(".home-scene");
       if (scene && !scene.querySelector(".member-showcase")) mount(doc);
     };
