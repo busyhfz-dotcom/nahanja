@@ -114,9 +114,19 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
   frame.addEventListener("load", () => {
     const doc = frame.contentDocument;
     if (!doc) return;
-    // A direct visit starts at the entry screen. Existing fragment routes are
-    // deliberately preserved, so a reload never interrupts an active path.
-    if (!frame.contentWindow.location.hash) frame.contentWindow.location.hash = "#/entry";
+    // A direct visit starts at the entry screen. The active inner route is
+    // mirrored into the address bar, so reloading a path never interrupts it.
+    const outerRoute = window.location.hash;
+    if (outerRoute) frame.contentWindow.location.hash = outerRoute;
+    else if (!frame.contentWindow.location.hash) frame.contentWindow.location.hash = "#/entry";
+    const syncRoute = () => {
+      const currentRoute = frame.contentWindow.location.hash;
+      if (currentRoute && window.location.hash !== currentRoute) {
+        window.history.replaceState(null, "", currentRoute);
+      }
+    };
+    frame.contentWindow.addEventListener("hashchange", syncRoute);
+    syncRoute();
     const observe = () => {
       style(doc);
       ensureEntryGuide(doc);
