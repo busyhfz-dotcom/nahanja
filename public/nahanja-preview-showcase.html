@@ -130,6 +130,21 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
     if (layer) layer.classList.toggle("member-compact-layer", Boolean(doc.querySelector(".auth-gate")));
   }
 
+  function normalizeTerminalHe(doc) {
+    const root = doc.getElementById("nahanja-app");
+    if (!root) return;
+    const walker = doc.createTreeWalker(root, doc.defaultView.NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+    const terminalEzafe = /ه(?:ٔ|‌ی)/g;
+    for (const node of textNodes) {
+      const parent = node.parentElement;
+      if (!parent || /^(SCRIPT|STYLE|TEXTAREA)$/i.test(parent.tagName)) continue;
+      const next = node.nodeValue.replace(terminalEzafe, "ه ی");
+      if (next !== node.nodeValue) node.nodeValue = next;
+    }
+  }
+
   function updatePanoramaTransition(doc) {
     const scene = doc.querySelector(".home-scene");
     const carousel = doc.querySelector(".world-carousel");
@@ -172,6 +187,7 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
     const observe = () => {
       style(doc);
       ensureEntryGuide(doc);
+      normalizeTerminalHe(doc);
       syncRoute();
       updatePanoramaTransition(doc);
       const scene = doc.querySelector(".home-scene");
