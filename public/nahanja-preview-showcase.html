@@ -45,6 +45,20 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
 #nahanja-app .member-audio{display:flex;align-items:center;gap:15px;margin-top:8px;padding:17px;border:1px solid #c1cbb5;background:#dce4cf;border-radius:18px 18px 7px 18px}#nahanja-app .member-play{display:grid;flex:none;width:43px;height:43px;place-items:center;border-radius:50%;background:#193c32;color:#f7f3e6}#nahanja-app .member-play svg{width:18px;height:18px;fill:currentColor;stroke:none}
 #nahanja-app .member-wave{display:flex;align-items:center;gap:4px;flex:1;height:44px;direction:ltr}#nahanja-app .member-wave i{display:block;height:var(--h);width:2px;background:currentColor;opacity:.7;border-radius:2px}
 #nahanja-app .member-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:17px;font-size:13px;color:#566a52}#nahanja-app .member-author{display:flex;align-items:center;gap:8px}#nahanja-app .member-avatar{display:grid;width:29px;height:29px;place-items:center;border-radius:50%;background:#d1dac5;color:#355040;font-size:12px}
+
+/* Page-wide cleanup and the entry-point guide. */
+#site-footer{display:none!important}
+#nahanja-app[data-screen="home"] .home{overflow-x:clip}
+#nahanja-app[data-screen="home"] .home-scene{min-height:532px;overflow:clip}
+#nahanja-app .entry-about{display:flex;align-items:center;justify-content:center;gap:9px;margin:25px auto 0;padding:8px 14px;border:0;border-bottom:1px solid #9aab92;background:transparent;color:#385342;font:inherit;font-size:15px;cursor:pointer}
+#nahanja-app .entry-about svg{width:17px;height:17px}
+#nahanja-app #layer.member-compact-layer{width:min(560px,calc(100% - 32px))}
+#nahanja-app .auth-gate{padding:27px 32px 28px;max-width:560px;margin:auto}
+#nahanja-app .auth-gate h2{margin:7px 0 6px;font-size:34px;line-height:1.45}
+#nahanja-app .auth-gate>p{margin:6px 0 14px;line-height:1.75}
+#nahanja-app .auth-gate .button{padding:12px 18px;font-size:17px}
+#nahanja-app .auth-gate .fine{margin-top:12px;font-size:13px}
+
 #nahanja-app .member-controls{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 18px 18px;border-top:1px solid #d4d8cb}#nahanja-app .member-progress{width:100%;height:3px;overflow:hidden;border-radius:999px;background:#6d846735}#nahanja-app .member-progress i{display:block;width:100%;height:100%;transform-origin:right;background:#4d6b4e;animation:member-progress 5.6s linear both}#nahanja-app .member-showcase:hover .member-progress i{animation-play-state:paused}
 #nahanja-app .member-next{display:grid;flex:none;width:38px;height:38px;place-items:center;border:1px solid #bac5b2;border-radius:50%;background:#f8f6ee;color:#345040}#nahanja-app .member-next svg{width:19px;height:19px}
 @keyframes member-arrive{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}@keyframes member-progress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
@@ -67,6 +81,22 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
     if (paused) return;
     timer = setTimeout(() => { index = (index + 1) % works.length; mount(doc); }, 5600);
   }
+  function ensureEntryGuide(doc) {
+    const content = doc.querySelector(".entry .entry-content");
+    if (content && !content.querySelector(".entry-about")) {
+      const button = doc.createElement("button");
+      button.type = "button";
+      button.className = "entry-about";
+      button.dataset.action = "about";
+      button.innerHTML = 'نهان‌جا چطور کار می‌کند؟ ' + icons.next;
+      const actions = content.querySelector(".actions");
+      if (actions) actions.insertAdjacentElement("afterend", button);
+      else content.appendChild(button);
+    }
+    const layer = doc.querySelector("#layer");
+    if (layer) layer.classList.toggle("member-compact-layer", Boolean(doc.querySelector(".auth-gate")));
+  }
+
   function mount(doc) {
     style(doc);
     const scene = doc.querySelector(".home-scene");
@@ -84,11 +114,12 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
   frame.addEventListener("load", () => {
     const doc = frame.contentDocument;
     if (!doc) return;
-    // The original preview normalizes an empty hash to #/entry before this
-    // handler runs, so always select the intended home screen explicitly.
-    if (frame.contentWindow.location.hash !== "#/home") frame.contentWindow.location.hash = "#/home";
+    // A direct visit starts at the entry screen. Existing fragment routes are
+    // deliberately preserved, so a reload never interrupts an active path.
+    if (!frame.contentWindow.location.hash) frame.contentWindow.location.hash = "#/entry";
     const observe = () => {
       style(doc);
+      ensureEntryGuide(doc);
       const scene = doc.querySelector(".home-scene");
       if (scene && !scene.querySelector(".member-showcase")) mount(doc);
     };
