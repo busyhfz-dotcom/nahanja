@@ -221,7 +221,7 @@ html{scrollbar-color:#3b5848 #e5e9dc;scrollbar-width:thin}
   function icon(name){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(iconPaths[name]||iconPaths.spark)+'</svg>';}
   function btn(label,action,extra='',cls='button'){return `<button type="button" class="${cls}" data-action="${action}" ${extra}>${label}</button>`;}
   function wave(){return `<span class="wave" aria-hidden="true">${Array.from({length:28},(_,i)=>`<i style="--h:${8+(i*13)%32}px"></i>`).join('')}</span>`;}
-  function cover(b){return b.coverUrl?`<span class="book-cover ${b.tone} cms-image"><img src="${esc(b.coverUrl)}" alt="${esc('جلد کتاب '+b.title)}"></span>`:`<span class="book-cover ${b.tone}"><span>${esc(b.title)}</span><small>${esc(b.author)}</small></span>`;}
+  function cover(b){return b.coverUrl?`<span class="book-cover ${b.tone} cms-image"><img class="cms-cover-backdrop" src="${esc(b.coverUrl)}" alt="" aria-hidden="true"><img class="cms-cover-art" src="${esc(b.coverUrl)}" alt="${esc('جلد کتاب '+b.title)}"></span>`:`<span class="book-cover ${b.tone}"><span>${esc(b.title)}</span><small>${esc(b.author)}</small></span>`;}
   function readStorage(key,fallback){try{const value=JSON.parse(localStorage.getItem(key));return value===null?fallback:value;}catch{return fallback;}}
   function writeStorage(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch{toast('ذخیره در این مرورگر ممکن نیست؛ انتخابت تا پایان این بازدید باقی می‌ماند.');return false;}}
   function validProfile(p){return p&&C.moods[p.mood]&&formatLabels[p.format]&&timeLabels[p.time];}
@@ -490,7 +490,7 @@ html{scrollbar-color:#3b5848 #e5e9dc;scrollbar-width:thin}
   state=parseRoute();history.replaceState({nahanja:state},'',routeHash(state));render();loadMember();
 })();
  </script>
-<style>.book-cover.cms-image{padding:0;overflow:hidden}.book-cover.cms-image:before{display:none}.book-cover.cms-image img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit}.cms-editorial-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}.cms-author{display:flex;align-items:center;gap:14px;margin-top:12px}.cms-author img{width:56px;height:56px;object-fit:cover;border-radius:50%}.cms-author small{display:block;font-size:13px;margin-top:5px}</style>
+<style>.book-cover.cms-image{padding:0;overflow:hidden}.book-cover.cms-image:before{display:none}.book-cover.cms-image img{position:absolute;inset:0;display:block;width:100%;height:100%;border-radius:inherit}.book-cover.cms-image .cms-cover-backdrop{object-fit:cover;filter:blur(15px) brightness(.75);transform:scale(1.18);opacity:.8}.book-cover.cms-image .cms-cover-art{object-fit:contain;object-position:center;z-index:1}.cms-editorial-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0}.cms-author{display:flex;align-items:center;gap:14px;margin-top:12px}.cms-author img{width:56px;height:56px;object-fit:cover;object-position:center 25%;border-radius:50%;flex:none}.cms-author small{display:block;font-size:13px;margin-top:5px}</style>
 <script src="nahanja-cms.js" defer></script>
 </body>
 </html>
