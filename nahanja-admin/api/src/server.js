@@ -181,7 +181,9 @@ async function route(req, res) {
     }
   }
   if (req.method === 'GET' && url.pathname === '/v1/admin/media') {
-    const rows = (await pool.query('SELECT * FROM media_asset ORDER BY created_at DESC LIMIT 100')).rows;
+    const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 100, 1), 100);
+    const offset = Math.max(Number(url.searchParams.get('offset')) || 0, 0);
+    const rows = (await pool.query('SELECT * FROM media_asset ORDER BY created_at DESC,id LIMIT $1 OFFSET $2', [limit, offset])).rows;
     return send(res, 200, { media: rows });
   }
   const mediaMatch = /^\/v1\/admin\/media\/([0-9a-f-]{36})$/.exec(url.pathname);
@@ -219,4 +221,3 @@ const server = http.createServer(async (req, res) => {
   }
 });
 server.listen(port, '0.0.0.0', () => console.log(`Nahanja CMS API on ${port}`));
-
