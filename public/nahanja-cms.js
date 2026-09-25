@@ -112,13 +112,19 @@
       author: text(e.payload?.author), ageHours: Number(e.payload?.ageHours) || 0,
       quality: Number(e.payload?.quality) || 0, editorial: !!e.payload?.editorial
     })).filter(v => !!worlds[v.world]);
+    const defaultSections = ['heading', 'scene', 'panorama'];
+    const requestedSections = Array.isArray(page?.payload?.sections) ? page.payload.sections : defaultSections.map(key => ({ key, enabled: true }));
+    const sections = requestedSections.filter(row => defaultSections.includes(row?.key)).map(row => ({
+      key: row.key, enabled: row.enabled !== false
+    }));
+    for (const section of defaultSections) if (!sections.some(row => row.key === section)) sections.push({ key: section, enabled: true });
     return { moods, books, worlds, experiences, photos, podcasts, shareWorks, homeShowcase, voices,
       home: { title: text(page?.payload?.title, 'هر حال، دری به یک جهان'),
         intro: text(page?.payload?.intro, 'یک حس را دنبال کن؛ باقیِ راه خودش پیدا می‌شود.'),
         featuredExperience: first(page || {}, 'featured_experience'),
         featuredBook: first(page || {}, 'featured_book'),
         featuredWorld: first(page || {}, 'featured_world'),
-        panorama: ordered(page || {}, 'panorama').map(targetKey) } };
+        panorama: ordered(page || {}, 'panorama').map(targetKey), sections } };
   }
   root.NahanjaCmsAdapter = { adapt };
   fetch('/cms-content', { cache: 'no-store' })
