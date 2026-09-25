@@ -1,0 +1,36 @@
+name: Deploy pending Nahanja fix
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "20 21 26 9 *"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '20 21 26 9 *'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: team_LjtgNp24UbWK8BnUpHG6Onpr
+      VERCEL_PROJECT_ID: prj_2HK2SmRvWnw28APC76dMLfF0X5Pp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Pull Vercel production settings
+        run: npx vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      - name: Build
+        run: npx vercel@latest build --prod --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy production
+        run: npx vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
