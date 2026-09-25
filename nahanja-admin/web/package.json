@@ -1,0 +1,14 @@
+{
+  "name": "nahanja-admin-web",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "vite --host 0.0.0.0", "build": "vite build" },
+  "dependencies": {
+    "@vercel/blob": "^2.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": { "vite": "^7.0.0" },
+  "engines": { "node": ">=22" }
+}
+
