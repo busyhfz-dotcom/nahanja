@@ -122,6 +122,8 @@
       home: { title: text(page?.payload?.title, 'هر حال، دری به یک جهان'),
         intro: text(page?.payload?.intro, 'یک حس را دنبال کن؛ باقیِ راه خودش پیدا می‌شود.'),
         featuredExperience: first(page || {}, 'featured_experience'),
+        questionExperience: first(page || {}, 'question_experience'),
+        audioExperience: first(page || {}, 'audio_experience'),
         featuredBook: first(page || {}, 'featured_book'),
         featuredWorld: first(page || {}, 'featured_world'),
         panorama: ordered(page || {}, 'panorama').map(targetKey), sections } };
