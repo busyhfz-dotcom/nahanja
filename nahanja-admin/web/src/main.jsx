@@ -21,7 +21,7 @@ const defaultPayload = {
   photo: { title: '', description: '' },
   podcast: { title: '', description: '', audioUrl: '', audioEmbedUrl: '' },
   video: { title: '', description: '' },
-  member_work: { title: '', summary: '' },
+  member_work: { title: '', summary: '', type: 'writing', imageUrl: '', audioUrl: '', audioEmbedUrl: '' },
   community_voice: { text: '', authorDisplay: '' },
   page: { title: '' },
   section: { title: '' },
@@ -220,7 +220,7 @@ function HomeSections({ value, onChange }) {
 const fieldLabels = { bio: 'زندگی‌نامهٔ کوتاه', audioUrl: 'نشانی مستقیم فایل صوتی', audioEmbedUrl: 'نشانی امبد صوت (Spotify یا SoundCloud)', imageUrl: 'نشانی دستی تصویر', coverUrl: 'نشانی دستی جلد', title: 'عنوان', name: 'نام', label: 'برچسب', short: 'متن کوتاه', lead: 'متن معرفی', description: 'توضیح', summary: 'خلاصه', text: 'متن', kicker: 'عبارت بالای عنوان', subtitle: 'زیرعنوان', invitation: 'دعوت', question: 'پرسش', paragraphs: 'پاراگراف‌ها', keywords: 'کلیدواژه‌ها', words: 'واژه‌ها', minutes: 'مدت (دقیقه)', format: 'نوع تجربه', tone: 'رنگ جلد پیش‌فرض', coverStyle: 'سبک جلد پیش‌فرض', icon: 'نماد', authorDisplay: 'نام نمایشی نویسنده' };
 function PayloadFields({ payload, kind, onChange }) {
   const entries = Object.entries(payload || {}).filter(([key, value]) => key !== 'id' && key !== 'displayOrder' && key !== 'sections' && value !== null && !key.endsWith('Media'));
-  const optional = kind === 'author' ? ['bio', 'imageUrl'] : kind === 'book' ? ['coverUrl'] : kind === 'photo' ? ['imageUrl'] : kind === 'podcast' || kind === 'experience' ? ['audioUrl', 'audioEmbedUrl'] : [];
+  const optional = kind === 'author' ? ['bio', 'imageUrl'] : kind === 'book' ? ['coverUrl'] : kind === 'photo' ? ['imageUrl'] : kind === 'podcast' || kind === 'experience' ? ['audioUrl', 'audioEmbedUrl'] : kind === 'member_work' ? ['imageUrl', 'audioUrl', 'audioEmbedUrl'] : [];
   return <div className="payload-fields">{entries.map(([key, value]) => {
     const label = fieldLabels[key] || key;
     if (Array.isArray(value) && value.every(item => typeof item === 'string')) return <label key={key}>{label}<span>هر مورد را در یک خط بنویسید.</span><textarea className="list-field" value={value.join('\n')} onChange={event => onChange(key, event.target.value.split('\n').map(item => item.trim()).filter(Boolean))} /></label>;
@@ -252,7 +252,7 @@ function RelationEditor({ draft, setDraft, allItems }) {
 
 function MediaEditor({ draft, setDraft, media, kind, onUpload }) {
   const slots = ['cover','image','artwork','audio','video','background','icon','thumbnail'];
-  const defaultSlot = kind === 'book' ? 'cover' : kind === 'author' ? 'image' : kind === 'podcast' || kind === 'experience' ? 'audio' : kind === 'video' ? 'video' : 'image';
+  const defaultSlot = kind === 'book' ? 'cover' : kind === 'author' ? 'image' : kind === 'podcast' || kind === 'experience' || kind === 'member_work' && draft.payload?.type === 'podcast' ? 'audio' : kind === 'video' ? 'video' : 'image';
   const accept = slot => slot === 'audio' ? 'audio/mpeg,audio/mp4,audio/wav' : slot === 'video' ? 'video/mp4,video/webm' : 'image/jpeg,image/png,image/webp';
   const matches = (asset, slot) => asset.state === 'ready' && (slot === 'audio' ? asset.mime_type.startsWith('audio/') : slot === 'video' ? asset.mime_type.startsWith('video/') : asset.mime_type.startsWith('image/'));
   const change = (index, patch) => setDraft(current => ({ ...current, media: current.media.map((m, i) => i === index ? { ...m, ...patch } : m) }));
