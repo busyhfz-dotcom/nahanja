@@ -148,9 +148,21 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
   function updatePanoramaTransition(doc) {
     const scene = doc.querySelector(".home-scene");
     const carousel = doc.querySelector(".world-carousel");
-    if (!scene || !carousel) return;
-    const bounds = carousel.getBoundingClientRect();
-    scene.classList.toggle("member-panorama-active", bounds.top < 400 && bounds.bottom > 0);
+    const view = doc.defaultView;
+    if (!scene || !carousel || !view) return;
+
+    const root = doc.documentElement;
+    const body = doc.body;
+    const viewportHeight = view.innerHeight || root.clientHeight || 0;
+    const scrollTop = view.scrollY || root.scrollTop || body.scrollTop || 0;
+    const scrollHeight = Math.max(root.scrollHeight, body.scrollHeight);
+    const distanceToBottom = scrollHeight - (scrollTop + viewportHeight);
+
+    // Keep the upper scene visible during the whole scroll. Fade it only once
+    // the visitor has genuinely reached the end of the inner page.
+    const atPageEnd = distanceToBottom <= 12;
+    const carouselIsVisible = carousel.getBoundingClientRect().top < viewportHeight;
+    scene.classList.toggle("member-panorama-active", atPageEnd && carouselIsVisible);
   }
 
   function mount(doc) {
