@@ -131,7 +131,9 @@
       type: ['podcast','writing','image'].includes(e.payload?.type) ? e.payload.type : 'writing',
       label: text(e.payload?.label), title: text(e.payload?.title),
       body: text(e.payload?.body), author: text(e.payload?.author), age: text(e.payload?.age),
-      imageUrl: asset(e, 'image'), audioUrl: asset(e, 'audio')
+      imageUrl: asset(e, 'image') || httpsUrl(e.payload?.imageUrl),
+      audioUrl: asset(e, 'audio') || httpsUrl(e.payload?.audioUrl),
+      audioEmbedUrl: audioEmbed(e.payload?.audioEmbedUrl)
     }));
     const voices = entries.filter(e => e.kind === 'community_voice').map(e => ({
       id: key(e), world: first(e, 'world'), text: text(e.payload?.text),
