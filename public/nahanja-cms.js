@@ -17,6 +17,31 @@
       return url.protocol === 'https:' && url.hostname.endsWith('.public.blob.vercel-storage.com') ? url.href : '';
     } catch { return ''; }
   };
+  const httpsUrl = value => {
+    if (typeof value !== 'string' || !value.trim()) return '';
+    try {
+      const url = new URL(value.trim());
+      return url.protocol === 'https:' && !url.username && !url.password ? url.href : '';
+    } catch { return ''; }
+  };
+  const audioEmbed = value => {
+    if (typeof value !== 'string') return '';
+    const candidate = value.trim().startsWith('<iframe') ? /\bsrc\s*=\s*["']([^"']+)["']/i.exec(value)?.[1] : value;
+    const source = httpsUrl(candidate);
+    if (!source) return '';
+    const url = new URL(source);
+    if (url.hostname === 'open.spotify.com' && /^\/(?:embed\/)?(?:episode|show|track)\/[a-zA-Z0-9]+$/.test(url.pathname)) {
+      return `https://open.spotify.com/embed/${url.pathname.replace(/^\/(?:embed\/)?/, '')}`;
+    }
+    if (url.hostname === 'w.soundcloud.com' && url.pathname === '/player/') {
+      const track = httpsUrl(url.searchParams.get('url'));
+      if (track && (new URL(track).hostname === 'soundcloud.com' || new URL(track).hostname.endsWith('.soundcloud.com'))) return `https://w.soundcloud.com/player/?url=${encodeURIComponent(track)}`;
+    }
+    if ((url.hostname === 'soundcloud.com' || url.hostname.endsWith('.soundcloud.com')) && url.pathname.length > 1) {
+      return `https://w.soundcloud.com/player/?url=${encodeURIComponent(source)}`;
+    }
+    return '';
+  };
   const ordered = (entry, field) => (entry.relations || []).filter(r => r.field === field).sort((a, b) => a.ordinal - b.ordinal);
   const legacyOrder = {
     book: ['prince', 'stranger', 'house'],
@@ -60,9 +85,10 @@
         const author = target(ordered(entry, 'author')[0]);
         books[id] = {
           id, title: text(p.title), author: text(author?.payload?.name),
+          authorBio: text(author?.payload?.bio), authorImageUrl: asset(author || {}, 'image') || httpsUrl(author?.payload?.imageUrl),
           tone: ['sage', 'ink', 'sand'].includes(p.tone) ? p.tone : 'sage',
           lead: text(p.lead), description: text(p.description), keywords: texts(p.keywords),
-          coverUrl: asset(entry, 'cover')
+          coverUrl: asset(entry, 'cover') || httpsUrl(p.coverUrl)
         };
       }
     }
@@ -78,7 +104,7 @@
         format: p.format === 'listen' ? 'listen' : 'read',
         question: text(p.question), paragraphs: texts(p.paragraphs),
         words: ordered(entry, 'words').map(r => [text(r.label), targetKey(r)]).filter(pair => !!worlds[pair[1]]),
-        audioUrl: asset(entry, 'audio')
+        audioUrl: asset(entry, 'audio') || httpsUrl(p.audioUrl), audioEmbedUrl: audioEmbed(p.audioEmbedUrl)
       });
     }
     for (const world of Object.values(worlds)) if (!moods[world.mood]) world.mood = Object.keys(moods)[0];
@@ -86,9 +112,9 @@
     for (const entry of entries) {
       const p = entry.payload || {};
       if (entry.kind === 'photo') photos.push({ title: text(p.title), description: text(p.description),
-        book: first(entry, 'book'), imageUrl: asset(entry, 'image') });
+        book: first(entry, 'book'), imageUrl: asset(entry, 'image') || httpsUrl(p.imageUrl) });
       if (entry.kind === 'podcast') podcasts.push({ title: text(p.title), description: text(p.description),
-        audioUrl: asset(entry, 'audio'), imageUrl: asset(entry, 'artwork') });
+        audioUrl: asset(entry, 'audio') || httpsUrl(p.audioUrl), audioEmbedUrl: audioEmbed(p.audioEmbedUrl), imageUrl: asset(entry, 'artwork') || httpsUrl(p.imageUrl) });
     }
     if (!Object.keys(moods).length || !Object.keys(books).length || !Object.keys(worlds).length || !experiences.length) {
       throw new Error('Published release lacks required catalog content');
@@ -134,3 +160,4 @@
     .then(data => root.NahanjaApplyRelease?.(adapt(data.entries)))
     .catch(error => console.warn('Nahanja keeps the bundled catalog:', error.message));
 })(window);
+
