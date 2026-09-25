@@ -184,7 +184,9 @@ function App() {
     let next;
     try { next = JSON.parse(payloadText); }
     catch { setMessage('ابتدا خطای ساختار داده را در حالت پیشرفته اصلاح کنید.'); setShowRaw(true); return; }
-    setPayloadText(JSON.stringify({ ...next, [key]: value }, null, 2));
+    const changed = { ...next, [key]: value };
+    setPayloadText(JSON.stringify(changed, null, 2));
+    setDraft(current => current ? { ...current, payload: changed } : current);
   }
   const title = item => item?.payload?.title || item?.payload?.name || item?.payload?.label || item?.payload?.text?.slice(0, 45) || item?.stable_key || 'بدون عنوان';
 
