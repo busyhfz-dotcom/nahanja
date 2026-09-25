@@ -85,8 +85,8 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
     const content = work.type === "writing"
       ? '<div class="member-writing">' + work.body + "</div>"
       : work.type === "image"
-        ? '<div class="member-image"><span>' + work.body + "</span></div>"
-        : '<div class="member-audio"><span class="member-play">' + icons.play + "</span>" + wave() + "</div>";
+        ? '<div class="member-image">' + (work.imageUrl ? '<img src="' + work.imageUrl + '" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">' : '') + '<span style="position:relative">' + work.body + "</span></div>"
+        : (work.audioUrl ? '<audio controls preload="none" src="' + work.audioUrl + '" style="width:100%;margin-top:12px"></audio>' : '<div class="member-audio"><span class="member-play">' + icons.play + "</span>" + wave() + "</div>");
     return '<aside class="member-showcase" aria-label="سهم تو؛ آثار تازه اعضا"><header class="member-head"><span class="member-kicker">' + icons.spark + ' سهم تو</span><span class="member-count">' + (index + 1) + ' از ' + works.length + '</span></header><article class="member-stage"><div class="member-item"><div><span class="member-type">' + icons[work.type] + ' ' + work.label + '</span><h2>' + work.title + '</h2>' + content + '</div><footer class="member-meta"><span class="member-author"><b class="member-avatar">' + work.author.charAt(0) + '</b>' + work.author + '</span><span>' + work.age + '</span></footer></div></article><footer class="member-controls"><span class="member-progress" aria-hidden="true"><i></i></span><button type="button" class="member-next" aria-label="اثر بعدی">' + icons.next + '</button></footer></aside>';
   }
 
@@ -170,6 +170,15 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
   frame.addEventListener("load", () => {
     const doc = frame.contentDocument;
     if (!doc) return;
+    frame.contentWindow.addEventListener("nahanja:release", event => {
+      const published = event.detail?.homeShowcase;
+      if (!Array.isArray(published)) return;
+      works.splice(0, works.length, ...published);
+      index = 0;
+      clearTimeout(timer);
+      doc.querySelector(".member-showcase")?.remove();
+      if (works.length) mount(doc);
+    });
     // A direct visit starts at the entry screen. The active inner route is
     // mirrored into the page that hosts this preview, so reload keeps the path.
     const hostWindow = window.parent === window ? window : window.parent;
@@ -191,7 +200,7 @@ html,body,#showcase-preview{width:100%;height:100%;margin:0;border:0;display:blo
       syncRoute();
       updatePanoramaTransition(doc);
       const scene = doc.querySelector(".home-scene");
-      if (scene && !scene.querySelector(".member-showcase")) mount(doc);
+      if (scene && works.length && !scene.querySelector(".member-showcase")) mount(doc);
     };
     new MutationObserver(observe).observe(doc.body, {childList:true,subtree:true});
     doc.defaultView.addEventListener("scroll", () => updatePanoramaTransition(doc), {passive:true});
