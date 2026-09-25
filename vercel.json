@@ -2,15 +2,36 @@
   "framework": "nextjs",
   "installCommand": "npm install",
   "buildCommand": "next build",
-  "rewrites": [{ "source": "/member-api/(.*)", "destination": "https://member-auth-production-bb64.up.railway.app/api/members/$1" }],
+  "rewrites": [
+    {
+      "source": "/member-api/(.*)",
+      "destination": "https://member-auth-production-bb64.up.railway.app/api/members/$1"
+    },
+    {
+      "source": "/cms-content",
+      "destination": "https://cms-api-production-530b.up.railway.app/v1/public/release"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Content-Security-Policy", "value": "frame-ancestors 'self'" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors 'self'"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
       ]
     }
   ]
