@@ -4,7 +4,6 @@ import { upload } from '@vercel/blob/client';
 import './style.css';
 
 const API = import.meta.env.VITE_CMS_API_URL || 'http://localhost:3001';
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const groups = [
   ['خانه و صفحه‌ها', ['section', 'page', 'ui_copy']],
   ['کتابخانه', ['book', 'author', 'collection']],
@@ -29,8 +28,11 @@ const defaultPayload = {
 };
 
 function App() {
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState(() => sessionStorage.getItem('nahanja.admin.token') || '');
   const [user, setUser] = useState(null);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginBusy, setLoginBusy] = useState(false);
   const [types, setTypes] = useState([]);
   const [kind, setKind] = useState('book');
   const [items, setItems] = useState([]);
@@ -59,24 +61,33 @@ function App() {
     return data;
   }
 
-  useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) { setMessage('شناسهٔ ورود Google هنوز تنظیم نشده است.'); return; }
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.onload = () => {
-      window.google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: ({ credential }) => setToken(credential) });
-      window.google.accounts.id.renderButton(document.getElementById('google-button'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'fa' });
-    };
-    document.head.append(script);
-    return () => script.remove();
-  }, []);
+  async function login(event) {
+    event.preventDefault();
+    setLoginBusy(true);
+    setMessage('');
+    try {
+      const response = await fetch(`${API}/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'نام کاربری یا رمز عبور نادرست است.');
+      sessionStorage.setItem('nahanja.admin.token', data.token);
+      setToken(data.token);
+      setPassword('');
+    } catch (error) {
+      setMessage(error.message === 'Invalid username or password' ? 'نام کاربری یا رمز عبور نادرست است.' : error.message);
+    } finally {
+      setLoginBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!token) return;
     Promise.all([request('/v1/admin/me'), request('/v1/admin/types')])
       .then(([account, catalog]) => { setUser(account); setTypes(catalog.types); setMessage(''); })
-      .catch(error => { setToken(''); setMessage(error.message); });
+      .catch(error => { sessionStorage.removeItem('nahanja.admin.token'); setToken(''); setUser(null); setMessage(error.message); });
   }, [token]);
 
   async function refresh() {
@@ -190,14 +201,14 @@ function App() {
   }
   const title = item => item?.payload?.title || item?.payload?.name || item?.payload?.label || item?.payload?.text?.slice(0, 45) || item?.stable_key || 'بدون عنوان';
 
-  if (!user) return <div className="login-wrap"><div className="login-panel"><div className="monogram">نـ</div><div className="eyebrow">NAHANJA · CONTENT STUDIO</div><h1>مدیریت نهان‌جا</h1><p>کتاب‌ها، روایت‌ها، جهان‌ها و صفحه‌های سایت از اینجا ویرایش و منتشر می‌شوند.</p><div id="google-button" /><div className="notice">{message}</div></div></div>;
+  if (!user) return <div className="login-wrap"><div className="login-panel"><div className="monogram">نـ</div><div className="eyebrow">NAHANJA · CONTENT STUDIO</div><h1>مدیریت نهان‌جا</h1><p>برای مدیریت کتاب‌ها، روایت‌ها و محتوای سایت وارد شوید.</p><form className="login-form" onSubmit={login}><label>نام کاربری<input autoComplete="username" value={username} onChange={event => setUsername(event.target.value)} required autoFocus /></label><label>رمز عبور<input type="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} required /></label><button className="button primary" type="submit" disabled={loginBusy}>{loginBusy ? 'در حال ورود…' : 'ورود به پنل'}</button></form><div className="notice" role="status">{message}</div></div></div>;
   return <div className="app-shell">
     <aside className="sidebar">
       <div className="brand"><span className="monogram small">نـ</span><span><strong>نهان‌جا</strong><small>پنل محتوا</small></span></div>
       <div className="workspace-label">فضای تحریریه</div>
       {groups.map(([group, names]) => <div className="nav-group" key={group}><div className="nav-title">{group}</div>{names.map(name => <button key={name} className={`nav-item ${kind === name && tab !== 'media' ? 'active' : ''}`} onClick={() => { setKind(name); setSelected(null); setDraft(null); setTab('content'); }}>{labels[name] || name}</button>)}</div>)}
       <div className="nav-group"><div className="nav-title">سیستم</div><button className={`nav-item ${tab === 'media' ? 'active' : ''}`} onClick={() => { setTab('media'); setSelected(null); }}>کتابخانهٔ مدیا</button></div>
-      <div className="sidebar-bottom"><span>{user.email}</span><small>{user.role}</small><button onClick={() => { setToken(''); setUser(null); window.google?.accounts.id.disableAutoSelect(); }}>خروج</button></div>
+      <div className="sidebar-bottom"><span>{user.username || user.email}</span><small>{user.role}</small><button onClick={() => { sessionStorage.removeItem('nahanja.admin.token'); setToken(''); setUser(null); }}>خروج</button></div>
     </aside>
     <main className="main">
       <header className="topbar"><span>فضای مدیریت / {tab === 'media' ? 'مدیا' : labels[kind] || kind}</span><span className="topbar-tag">پیش‌نویس و انتشار مستقل</span></header>
