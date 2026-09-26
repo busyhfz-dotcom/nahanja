@@ -1,16 +1,25 @@
 import http from 'node:http';
+import { pbkdf2Sync, timingSafeEqual } from 'node:crypto';
 import { Pool } from 'pg';
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { jwtVerify, SignJWT } from 'jose';
 import { handleUpload } from '@vercel/blob/client';
 import { createItem, saveDraft, setDeleted, publish, isUuid, badRequest } from './content.js';
 
 const port = Number(process.env.PORT || 3001);
 const adminOrigin = process.env.ADMIN_ORIGIN;
-const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const adminUsername = process.env.ADMIN_USERNAME;
+const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
+const sessionSecret = process.env.SESSION_SECRET;
 const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl || !googleClientId || !adminOrigin) throw new Error('DATABASE_URL, GOOGLE_CLIENT_ID and ADMIN_ORIGIN are required');
+if (!databaseUrl || !adminOrigin || !adminUsername || !adminPasswordHash || !sessionSecret) {
+  throw new Error('DATABASE_URL, ADMIN_ORIGIN, ADMIN_USERNAME, ADMIN_PASSWORD_HASH and SESSION_SECRET are required');
+}
+const sessionKey = Buffer.from(sessionSecret, 'base64url');
+if (sessionKey.length < 32) throw new Error('SESSION_SECRET must contain at least 32 bytes');
 const pool = new Pool({ connectionString: databaseUrl, max: 10 });
-const googleKeys = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
+const loginAttempts = new Map();
+const loginWindowMs = 15 * 60 * 1000;
+const maxLoginAttempts = 5;
 const writeRoles = new Set(['owner', 'editor']);
 const publishRoles = new Set(['owner', 'publisher']);
 
@@ -31,26 +40,50 @@ async function bodyJson(req) {
   catch { throw badRequest('Invalid JSON'); }
 }
 
+function requestIp(req) {
+  return String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').split(',')[0].trim();
+}
+
+function verifyPassword(password) {
+  const [scheme, iterationsText, saltText, digestText] = adminPasswordHash.split('$');
+  if (scheme !== 'pbkdf2' || !/^\d+$/.test(iterationsText || '') || !saltText || !digestText) return false;
+  const expected = Buffer.from(digestText, 'base64url');
+  const actual = pbkdf2Sync(String(password || ''), Buffer.from(saltText, 'base64url'), Number(iterationsText), expected.length, 'sha256');
+  return expected.length === actual.length && timingSafeEqual(expected, actual);
+}
+
+function loginAllowed(ip) {
+  const now = Date.now();
+  const current = loginAttempts.get(ip);
+  if (!current || now - current.startedAt > loginWindowMs) {
+    loginAttempts.set(ip, { startedAt: now, count: 0 });
+    return true;
+  }
+  return current.count < maxLoginAttempts;
+}
+
+function recordLoginFailure(ip) {
+  const current = loginAttempts.get(ip) || { startedAt: Date.now(), count: 0 };
+  current.count += 1;
+  loginAttempts.set(ip, current);
+}
+
 async function actorFor(req) {
   const token = /^Bearer (\S+)$/.exec(req.headers.authorization || '')?.[1];
   if (!token) throw Object.assign(new Error('Sign in required'), { status: 401 });
   let claims;
   try {
-    ({ payload: claims } = await jwtVerify(token, googleKeys, {
-      audience: googleClientId,
-      issuer: ['https://accounts.google.com', 'accounts.google.com'],
+    ({ payload: claims } = await jwtVerify(token, sessionKey, {
+      audience: 'nahanja-admin',
+      issuer: 'nahanja-cms-api',
     }));
-  } catch { throw Object.assign(new Error('Invalid Google session'), { status: 401 }); }
-  if (claims.email_verified !== true || typeof claims.email !== 'string' || typeof claims.sub !== 'string') {
-    throw Object.assign(new Error('Verified Google email required'), { status: 403 });
+  } catch { throw Object.assign(new Error('Invalid or expired session'), { status: 401 }); }
+  if (typeof claims.sub !== 'string' || !isUuid(claims.sub)) {
+    throw Object.assign(new Error('Invalid session'), { status: 401 });
   }
-  const email = claims.email.toLowerCase();
-  const result = await pool.query(`UPDATE admin_account SET identity_subject=$1
-    WHERE identity_provider='google' AND identity_subject=$2 AND lower(email)=$3 AND active
-    RETURNING id,email,role`, [claims.sub, `pending:${email}`, email]);
-  const actor = result.rows[0] || (await pool.query(`SELECT id,email,role FROM admin_account
-    WHERE identity_provider='google' AND identity_subject=$1 AND lower(email)=$2 AND active`, [claims.sub, email])).rows[0];
-  if (!actor) throw Object.assign(new Error('This Google account is not an admin'), { status: 403 });
+  const actor = (await pool.query(`SELECT id,email,role,identity_subject AS username FROM admin_account
+    WHERE id=$1 AND identity_provider='local' AND active`, [claims.sub])).rows[0];
+  if (!actor) throw Object.assign(new Error('This account is not an active admin'), { status: 403 });
   return actor;
 }
 
@@ -82,6 +115,34 @@ async function route(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   if (req.method === 'OPTIONS') return send(res, 204, null);
   if (req.method === 'GET' && url.pathname === '/health') return send(res, 200, { ok: true });
+  if (req.method === 'POST' && url.pathname === '/v1/auth/login') {
+    const ip = requestIp(req);
+    if (!loginAllowed(ip)) throw Object.assign(new Error('Too many login attempts. Try again later.'), { status: 429 });
+    const input = await bodyJson(req);
+    const username = typeof input.username === 'string' ? input.username.trim() : '';
+    const password = typeof input.password === 'string' ? input.password : '';
+    const validUsername = username === adminUsername;
+    const validPassword = verifyPassword(password);
+    if (!validUsername || !validPassword) {
+      recordLoginFailure(ip);
+      throw Object.assign(new Error('Invalid username or password'), { status: 401 });
+    }
+    loginAttempts.delete(ip);
+    const actor = (await pool.query(`INSERT INTO admin_account(identity_provider,identity_subject,email,role,active)
+      VALUES('local',$1,$2,'owner',true)
+      ON CONFLICT(identity_provider,identity_subject)
+      DO UPDATE SET email=EXCLUDED.email,role='owner',active=true
+      RETURNING id,email,role,identity_subject AS username`, [adminUsername, `${adminUsername}@local.invalid`])).rows[0];
+    const token = await new SignJWT({ role: actor.role, username: actor.username })
+      .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+      .setSubject(actor.id)
+      .setIssuer('nahanja-cms-api')
+      .setAudience('nahanja-admin')
+      .setIssuedAt()
+      .setExpirationTime('12h')
+      .sign(sessionKey);
+    return send(res, 200, { token, expiresIn: 43200, user: actor });
+  }
   if (req.method === 'GET' && url.pathname === '/v1/public/release') {
     const release = (await pool.query(`SELECT a.release_id,r.release_no,r.created_at
       FROM active_release a JOIN publication_release r ON r.id=a.release_id`)).rows[0];
