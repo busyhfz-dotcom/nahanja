@@ -1,0 +1,32 @@
+html,body{overscroll-behavior-y:contain;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{padding-bottom:env(safe-area-inset-bottom)}
+button,a,input,textarea,select{-webkit-tap-highlight-color:transparent}
+button,a{touch-action:manipulation}
+
+@media(max-width:620px){
+  #nahanja-app{min-height:100dvh;overflow-x:clip}
+  #site-header{position:sticky;top:0;z-index:50;padding-top:max(12px,env(safe-area-inset-top));background:#f2efe5f2;backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px)}
+  #site-header button,#site-header a,.button,.round{min-height:44px}
+  .mood-bar button,.member-controls button,.panorama-controls>button{min-width:44px;min-height:44px}
+  .nav{overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .nav::-webkit-scrollbar{display:none}
+  .home,.collection-screen,.editorial-screen,.path,.onboarding,.entry{width:100%;max-width:100%;overflow-x:clip}
+  .home-scene,.shelf,.editorial-grid,.worlds-garden{max-width:100%}
+  .shelf-item .book-cover{aspect-ratio:160/225;min-height:0!important;overflow:hidden}
+  .book-cover img{display:block;width:100%;height:100%;object-fit:cover}
+  dialog{max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));margin-top:env(safe-area-inset-top);margin-bottom:env(safe-area-inset-bottom)}
+  .footer{padding-bottom:max(13px,env(safe-area-inset-bottom))}
+}
+
+@media(max-width:380px){
+  #site-header{padding-inline:14px}
+  .nav{gap:7px}
+  .nav button{font-size:14px;padding-inline:4px}
+  .home-heading h1,.section-heading h1{font-size:32px}
+  .home-focus{padding:26px}
+}
+
+@media(display-mode:standalone){
+  #site-header{padding-top:max(12px,env(safe-area-inset-top))}
+  .footer{padding-bottom:max(14px,env(safe-area-inset-bottom))}
+}
