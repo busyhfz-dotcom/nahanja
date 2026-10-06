@@ -1,5 +1,8 @@
 node_modules/
+.npm-cache/
+android/
 .next/
 out/
+*.tsbuildinfo
 .env*
 .DS_Store
