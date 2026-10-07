@@ -16,6 +16,10 @@ export function validateContent(input, kind) {
   if (kind === 'author' && typeof payload.name !== 'string') throw badRequest('name required');
   if (kind === 'book' && payload.coverMedia != null && typeof payload.coverMedia !== 'string') throw badRequest('Invalid coverMedia');
   if (kind === 'experience' && payload.format && !['read', 'listen', 'watch'].includes(payload.format)) throw badRequest('Invalid experience format');
+  if (payload.journeyMode != null && !['auto', 'manual', 'hidden'].includes(payload.journeyMode)) throw badRequest('Invalid journey mode');
+  if (payload.curationMode != null && !['auto', 'manual'].includes(payload.curationMode)) throw badRequest('Invalid curation mode');
+  if (payload.journeyOrder != null && (!Number.isFinite(payload.journeyOrder) || Math.abs(payload.journeyOrder) > 1000)) throw badRequest('Invalid journey order');
+  for (const field of ['journeyLead', 'journeyQuestion']) if (payload[field] != null && (typeof payload[field] !== 'string' || payload[field].length > 2000)) throw badRequest(`Invalid ${field}`);
   const relations = input.relations ?? [];
   const media = input.media ?? [];
   if (!Array.isArray(relations) || relations.length > 500 || !Array.isArray(media) || media.length > 100) throw badRequest('Invalid relations or media');
