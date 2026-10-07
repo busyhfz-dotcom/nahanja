@@ -1,10 +1,11 @@
-const CACHE_VERSION = "nahanja-shell-v2";
+const CACHE_VERSION = "nahanja-shell-v3";
 const APP_SHELL = [
   "/",
   "/offline.html",
   "/nahanja-preview-showcase.html",
   "/nahanja-preview.html",
-  "/mobile-app.css?v=20261006",
+  "/nahanja-journey.js?v=20261007",
+  "/mobile-app.css?v=20261007",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];

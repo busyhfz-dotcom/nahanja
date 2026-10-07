@@ -146,7 +146,7 @@ async function route(req, res) {
   if (req.method === 'GET' && url.pathname === '/v1/public/release') {
     const release = (await pool.query(`SELECT a.release_id,r.release_no,r.created_at
       FROM active_release a JOIN publication_release r ON r.id=a.release_id`)).rows[0];
-    const entries = (await pool.query(`SELECT i.id,i.kind,i.stable_key,i.slug,r.payload,
+    const entries = (await pool.query(`SELECT i.id,i.kind,i.stable_key,i.slug,r.payload,r.created_at AS "createdAt",
       COALESCE((SELECT jsonb_agg(jsonb_build_object('field',rr.field_name,'ordinal',rr.ordinal,'targetId',rr.target_item_id,'label',rr.label) ORDER BY rr.field_name,rr.ordinal)
         FROM revision_relation rr WHERE rr.revision_id=e.revision_id),'[]'::jsonb) AS relations,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('slot',rm.slot,'ordinal',rm.ordinal,'mediaId',rm.media_id,'url',m.public_url,'alt',m.alt_fa,'crop',rm.crop) ORDER BY rm.slot,rm.ordinal)

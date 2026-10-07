@@ -65,7 +65,7 @@
       return item ? key(item) : '';
     };
     const first = (entry, field) => targetKey(ordered(entry, field)[0]);
-    const moods = {}, books = {}, worlds = {}, experiences = [], photos = [], podcasts = [];
+    const moods = {}, books = {}, worlds = {}, experiences = [], photos = [], podcasts = [], videos = [];
     const page = entries.find(entry => entry.stable_key === 'page:home');
     const sharePage = entries.find(entry => entry.stable_key === 'page:share');
     for (const entry of entries) {
@@ -88,7 +88,10 @@
           authorBio: text(author?.payload?.bio), authorImageUrl: asset(author || {}, 'image') || httpsUrl(author?.payload?.imageUrl),
           tone: ['sage', 'ink', 'sand'].includes(p.tone) ? p.tone : 'sage',
           lead: text(p.lead), description: text(p.description), keywords: texts(p.keywords),
-          coverUrl: asset(entry, 'cover') || httpsUrl(p.coverUrl)
+          coverUrl: asset(entry, 'cover') || httpsUrl(p.coverUrl),
+          world: first(entry, 'primary_world') || first(entry, 'world'), moods: ordered(entry, 'moods').map(targetKey),
+          createdAt: entry.createdAt, journeyMode: p.journeyMode,
+          journeyLead: text(p.journeyLead), journeyQuestion: text(p.journeyQuestion), journeyOrder: p.journeyOrder
         };
       }
     }
@@ -104,17 +107,24 @@
         format: p.format === 'listen' ? 'listen' : 'read',
         question: text(p.question), paragraphs: texts(p.paragraphs),
         words: ordered(entry, 'words').map(r => [text(r.label), targetKey(r)]).filter(pair => !!worlds[pair[1]]),
-        audioUrl: asset(entry, 'audio') || httpsUrl(p.audioUrl), audioEmbedUrl: audioEmbed(p.audioEmbedUrl)
+        audioUrl: asset(entry, 'audio') || httpsUrl(p.audioUrl), audioEmbedUrl: audioEmbed(p.audioEmbedUrl),
+        createdAt: entry.createdAt, journeyMode: p.journeyMode,
+        journeyLead: text(p.journeyLead), journeyQuestion: text(p.journeyQuestion), journeyOrder: p.journeyOrder
       });
     }
     for (const world of Object.values(worlds)) if (!moods[world.mood]) world.mood = Object.keys(moods)[0];
     for (const mood of Object.values(moods)) if (!worlds[mood.world]) mood.world = Object.keys(worlds)[0];
     for (const entry of entries) {
       const p = entry.payload || {};
-      if (entry.kind === 'photo') photos.push({ title: text(p.title), description: text(p.description),
-        book: first(entry, 'book'), imageUrl: asset(entry, 'image') || httpsUrl(p.imageUrl) });
-      if (entry.kind === 'podcast') podcasts.push({ title: text(p.title), description: text(p.description),
+      const journey = { id: key(entry), book: first(entry, 'book'), world: first(entry, 'primary_world') || first(entry, 'world'),
+        moods: ordered(entry, 'moods').map(targetKey), keywords: texts(p.keywords), createdAt: entry.createdAt,
+        journeyMode: p.journeyMode, journeyLead: text(p.journeyLead), journeyQuestion: text(p.journeyQuestion), journeyOrder: p.journeyOrder };
+      if (entry.kind === 'photo') photos.push({ ...journey, title: text(p.title), description: text(p.description),
+        imageUrl: asset(entry, 'image') || httpsUrl(p.imageUrl) });
+      if (entry.kind === 'podcast') podcasts.push({ ...journey, title: text(p.title), description: text(p.description),
         audioUrl: asset(entry, 'audio') || httpsUrl(p.audioUrl), audioEmbedUrl: audioEmbed(p.audioEmbedUrl), imageUrl: asset(entry, 'artwork') || httpsUrl(p.imageUrl) });
+      if (entry.kind === 'video') videos.push({ ...journey, title: text(p.title), description: text(p.description),
+        videoUrl: asset(entry, 'video') || httpsUrl(p.videoUrl), imageUrl: asset(entry, 'thumbnail') || httpsUrl(p.imageUrl) });
     }
     if (!Object.keys(moods).length || !Object.keys(books).length || !Object.keys(worlds).length || !experiences.length) {
       throw new Error('Published release lacks required catalog content');
@@ -140,15 +150,16 @@
       author: text(e.payload?.author), ageHours: Number(e.payload?.ageHours) || 0,
       quality: Number(e.payload?.quality) || 0, editorial: !!e.payload?.editorial
     })).filter(v => !!worlds[v.world]);
-    const defaultSections = ['heading', 'scene', 'panorama'];
+    const defaultSections = ['heading', 'scene', 'journey', 'panorama'];
     const requestedSections = Array.isArray(page?.payload?.sections) ? page.payload.sections : defaultSections.map(key => ({ key, enabled: true }));
     const sections = requestedSections.filter(row => defaultSections.includes(row?.key)).map(row => ({
       key: row.key, enabled: row.enabled !== false
     }));
     for (const section of defaultSections) if (!sections.some(row => row.key === section)) sections.push({ key: section, enabled: true });
-    return { moods, books, worlds, experiences, photos, podcasts, shareWorks, homeShowcase, voices,
+    return { moods, books, worlds, experiences, photos, podcasts, videos, shareWorks, homeShowcase, voices,
       home: { title: text(page?.payload?.title, 'هر حال، دری به یک جهان'),
         intro: text(page?.payload?.intro, 'یک حس را دنبال کن؛ باقیِ راه خودش پیدا می‌شود.'),
+        curationMode: page?.payload?.curationMode === 'manual' ? 'manual' : 'auto',
         featuredExperience: first(page || {}, 'featured_experience'),
         questionExperience: first(page || {}, 'question_experience'),
         audioExperience: first(page || {}, 'audio_experience'),
